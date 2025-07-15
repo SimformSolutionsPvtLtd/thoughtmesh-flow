@@ -186,6 +186,18 @@ async def get_and_cache_all_types_dict(
             **langflow_components["components"],
             **components_dict,
         }
+
+        # Integrate framework components
+        try:
+            # Import here to avoid circular imports
+            from langflow.core.frameworks.integration import integrate_framework_components  # noqa: PLC0415
+
+            await integrate_framework_components()
+        except ImportError:
+            logger.debug("Framework integration not available")
+        except RuntimeError as e:
+            logger.warning("Failed to integrate framework components: %s", e)
+
         component_count = sum(len(comps) for comps in component_cache.all_types_dict.values())
         logger.debug(f"Loaded {component_count} components")
     return component_cache.all_types_dict

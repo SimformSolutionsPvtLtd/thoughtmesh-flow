@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 from loguru import logger
 
+from langflow.core.frameworks.execution import enhance_vertex_execution
 from langflow.exceptions.component import ComponentBuildError
 from langflow.graph.edge.base import CycleEdge, Edge
 from langflow.graph.graph.constants import Finish, lazy_load_vertex_dict
@@ -1455,7 +1456,9 @@ class Graph:
                         should_build = True
 
             if should_build:
-                await vertex.build(
+                # Enhance vertex execution with framework dispatch
+                await enhance_vertex_execution(
+                    vertex=vertex,
                     user_id=user_id,
                     inputs=inputs_dict,
                     fallback_to_env_vars=fallback_to_env_vars,
