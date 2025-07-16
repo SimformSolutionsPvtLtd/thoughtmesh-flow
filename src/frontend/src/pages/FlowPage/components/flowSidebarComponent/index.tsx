@@ -6,8 +6,10 @@ import {
 } from "@/components/ui/sidebar";
 import SkeletonGroup from "@/components/ui/skeletonGroup";
 import { useAddComponent } from "@/hooks/use-add-component";
+import { useFrameworkData } from "@/hooks/use-framework-data";
 import { useShortcutsStore } from "@/stores/shortcuts";
 import { useStoreStore } from "@/stores/storeStore";
+import { useFrameworkStore } from "@/stores/frameworkStore";
 import { checkChatInput, checkWebhookInput } from "@/utils/reactflowUtils";
 import {
   nodeColors,
@@ -26,6 +28,7 @@ import { APIClassType } from "../../../../types/api";
 import isWrappedWithClass from "../PageComponent/utils/is-wrapped-with-class";
 import { CategoryGroup } from "./components/categoryGroup";
 import NoResultsMessage from "./components/emptySearchComponent";
+import { FrameworkSelector } from "./components/frameworkSelector";
 import MemoizedSidebarGroup from "./components/sidebarBundles";
 import SidebarMenuButtons from "./components/sidebarFooterButtons";
 import { SidebarHeaderComponent } from "./components/sidebarHeader";
@@ -50,6 +53,19 @@ interface FlowSidebarComponentProps {
 
 export function FlowSidebarComponent({ isLoading }: FlowSidebarComponentProps) {
   const data = useTypesStore((state) => state.data);
+  const { selectedFramework, getCurrentFrameworkData } = useFrameworkStore();
+
+  // Use framework data hook to manage framework components
+  const { loading: frameworkLoading } = useFrameworkData();
+
+  // Use framework data when a non-langflow framework is selected
+  const effectiveData = useMemo(() => {
+    if (selectedFramework === "langflow") {
+      return data;
+    } else {
+      return getCurrentFrameworkData();
+    }
+  }, [selectedFramework, data, getCurrentFrameworkData]);
 
   const { getFilterEdge, setFilterEdge, filterType } = useFlowStore(
     useShallow((state) => ({
@@ -64,7 +80,7 @@ export function FlowSidebarComponent({ isLoading }: FlowSidebarComponentProps) {
   const addComponent = useAddComponent();
 
   // State
-  const [dataFilter, setFilterData] = useState(data);
+  const [dataFilter, setFilterData] = useState(effectiveData);
   const [search, setSearch] = useState("");
   const [fuse, setFuse] = useState<Fuse<any> | null>(null);
   const [openCategories, setOpenCategories] = useState<string[]>([]);
@@ -76,8 +92,8 @@ export function FlowSidebarComponent({ isLoading }: FlowSidebarComponentProps) {
   const searchInputRef = useRef<HTMLInputElement | null>(null);
 
   const customComponent = useMemo(() => {
-    return data?.["custom_component"]?.["CustomComponent"] ?? null;
-  }, [data]);
+    return effectiveData?.["custom_component"]?.["CustomComponent"] ?? null;
+  }, [effectiveData]);
 
   const searchResults = useMemo(() => {
     if (!search || !fuse) return null;
@@ -91,20 +107,20 @@ export function FlowSidebarComponent({ isLoading }: FlowSidebarComponentProps) {
     return {
       fuseResults,
       fuseCategories: fuseResults.map((result) => result.item.category),
-      combinedResults: combinedResultsFn(fuseResults, data),
-      traditionalResults: traditionalSearchMetadata(data, searchTerm),
+      combinedResults: combinedResultsFn(fuseResults, effectiveData),
+      traditionalResults: traditionalSearchMetadata(effectiveData, searchTerm),
     };
-  }, [search, fuse, data]);
+  }, [search, fuse, effectiveData]);
 
   const searchFilteredData = useMemo(() => {
-    if (!search || !searchResults) return cloneDeep(data);
+    if (!search || !searchResults) return cloneDeep(effectiveData);
 
     return filteredDataFn(
-      data,
+      effectiveData,
       searchResults.combinedResults,
       searchResults.traditionalResults,
     );
-  }, [data, search, searchResults]);
+  }, [effectiveData, search, searchResults]);
 
   const sortedCategories = useMemo(() => {
     if (!searchResults || !searchFilteredData) return [];
@@ -138,7 +154,7 @@ export function FlowSidebarComponent({ isLoading }: FlowSidebarComponentProps) {
   const hasResults = useMemo(() => {
     return Object.entries(dataFilter).some(
       ([category, items]) =>
-        Object.keys(items).length > 0 &&
+        items && typeof items === 'object' && Object.keys(items).length > 0 &&
         (CATEGORIES.find((c) => c.name === category) ||
           BUNDLES.find((b) => b.name === category)),
     );
@@ -160,9 +176,9 @@ export function FlowSidebarComponent({ isLoading }: FlowSidebarComponentProps) {
 
   const handleClearSearch = useCallback(() => {
     setSearch("");
-    setFilterData(data);
+    setFilterData(effectiveData);
     setOpenCategories([]);
-  }, [data]);
+  }, [effectiveData]);
 
   const handleInputFocus = useCallback(() => {
     setIsInputFocused(true);
@@ -207,22 +223,22 @@ export function FlowSidebarComponent({ isLoading }: FlowSidebarComponentProps) {
       includeScore: true,
     };
 
-    const fuseData = Object.entries(data).flatMap(([category, items]) =>
-      Object.entries(items).map(([key, value]) => ({
-        ...value,
+    const fuseData = Object.entries(effectiveData || {}).flatMap(([category, items]) =>
+      Object.entries(items || {}).map(([key, value]) => ({
+        ...(value as any),
         category,
         key,
       })),
     );
 
     setFuse(new Fuse(fuseData, options));
-  }, [data]);
+  }, [effectiveData]);
 
   useEffect(() => {
     if (getFilterEdge.length !== 0) {
       setSearch("");
     }
-  }, [getFilterEdge, data]);
+  }, [getFilterEdge, effectiveData]);
 
   useEffect(() => {
     if (search === "" && getFilterEdge.length === 0) {
@@ -309,11 +325,11 @@ export function FlowSidebarComponent({ isLoading }: FlowSidebarComponentProps) {
         filterType={filterType}
         setFilterEdge={setFilterEdge}
         setFilterData={setFilterData}
-        data={data}
+        data={effectiveData}
       />
 
       <SidebarContent>
-        {isLoading ? (
+        {isLoading || frameworkLoading ? (
           <div className="flex flex-col gap-2">
             <div className="flex flex-col gap-1 p-3">
               <SkeletonGroup count={13} className="my-0.5 h-7" />

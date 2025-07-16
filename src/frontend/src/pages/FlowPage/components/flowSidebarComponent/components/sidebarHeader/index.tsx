@@ -11,6 +11,7 @@ import { SidebarHeader, SidebarTrigger } from "@/components/ui/sidebar";
 import { memo } from "react";
 import { SidebarHeaderComponentProps } from "../../types";
 import FeatureToggles from "../featureTogglesComponent";
+import { FrameworkSelector } from "../frameworkSelector";
 import { SearchInput } from "../searchInput";
 import { SidebarFilterComponent } from "../sidebarFilterComponent";
 
@@ -66,6 +67,7 @@ export const SidebarHeaderComponent = memo(function SidebarHeaderComponent({
           />
         </DisclosureContent>
       </Disclosure>
+      <FrameworkSelector />
       <SearchInput
         searchInputRef={searchInputRef}
         isInputFocused={isInputFocused}
