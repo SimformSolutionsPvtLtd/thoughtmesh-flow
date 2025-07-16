@@ -32,9 +32,9 @@ logger = logging.getLogger(__name__)
 # Try to import the real Agno adapter first, fall back to simulated
 AgnoAdapter: type[FrameworkAdapter]
 try:
-    from langflow.core.frameworks.agno_adapter_real import AgnoAdapterReal
+    from langflow.core.frameworks.real_agno_adapter import RealAgnoAdapter
 
-    AgnoAdapter = AgnoAdapterReal
+    AgnoAdapter = RealAgnoAdapter
     logger.info("Using real Agno adapter")
 except ImportError as e:
     logger.info("Real Agno adapter not available (%s), falling back to simulated", str(e))
@@ -59,7 +59,7 @@ def create_framework_manager() -> FrameworkManager:
 
     logger.info(
         "Framework manager created with adapters: Langflow, Agno (%s)",
-        "real" if AgnoAdapter.__name__ == "AgnoAdapterReal" else "simulated",
+        "real" if AgnoAdapter.__name__ == "RealAgnoAdapter" else "simulated",
     )
 
     return manager

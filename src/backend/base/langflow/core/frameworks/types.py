@@ -28,8 +28,14 @@ class ComponentCategory(str, Enum):
     EMBEDDINGS = "Embeddings"
     RETRIEVERS = "Retrievers"
     MEMORY = "Memory"
+    STORAGE = "Storage"
+    RERANKERS = "Rerankers"
+    CHUNKING = "Chunking"
+    DOCUMENT_READERS = "Document Readers"
     CHAINS = "Chains"
     AGENTS = "Agents"
+    TEAMS = "Teams"
+    WORKFLOWS = "Workflows"
     UTILITIES = "Utilities"
 
 
