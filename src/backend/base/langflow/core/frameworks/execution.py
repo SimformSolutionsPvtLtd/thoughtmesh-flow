@@ -107,7 +107,7 @@ class FrameworkExecutionEnhancer:
 
         if framework_str:
             try:
-                from langflow.core.frameworks.types import FrameworkType  # noqa: PLC0415
+                from langflow.core.frameworks.types import FrameworkType
 
                 return FrameworkType(framework_str)
             except (ValueError, ImportError):
@@ -136,7 +136,7 @@ class FrameworkExecutionEnhancer:
 
         try:
             # Create execution context for framework
-            from langflow.core.frameworks.types import ExecutionContext  # noqa: PLC0415
+            from langflow.core.frameworks.types import ExecutionContext
 
             component_id = component_data.get("framework_component_id") or component_data.get("id", "unknown")
 
@@ -198,3 +198,62 @@ async def enhance_component_execution(
     """
     enhancer = get_framework_execution_enhancer()
     return await enhancer.enhance_component_execution(component_data, execution_context)
+
+
+async def enhance_vertex_execution(
+    vertex,
+    user_id: str | None = None,
+    inputs: dict[str, Any] | None = None,
+    *,
+    fallback_to_env_vars: bool = False,
+    files: dict[str, Any] | None = None,
+    event_manager=None,
+) -> dict[str, Any] | None:
+    """Enhance vertex execution with framework support.
+
+    This function is called during graph execution to handle framework components.
+
+    Args:
+        vertex: The vertex being executed
+        user_id: The user ID for the execution
+        inputs: Input data for the vertex
+        fallback_to_env_vars: Whether to fallback to environment variables
+        files: File inputs for the vertex
+        event_manager: Event manager for execution events
+
+    Returns:
+        Enhanced execution result if this is a framework component, None otherwise
+    """
+    if not hasattr(vertex, "data") or not isinstance(vertex.data, dict):
+        return None
+
+    # Check if this is a framework component
+    enhancer = get_framework_execution_enhancer()
+    if not enhancer.is_framework_component(vertex.data):
+        return None
+
+    # Create execution context
+    execution_context = {
+        "inputs": inputs or {},
+        "config": getattr(vertex, "params", {}),
+        "session_id": getattr(vertex, "session_id", None),
+        "user_id": user_id,
+        "fallback_to_env_vars": fallback_to_env_vars,
+        "files": files or {},
+        "event_manager": event_manager,
+    }
+
+    # Use the existing component execution enhancement
+    result = await enhancer.enhance_component_execution(vertex.data, execution_context)
+
+    if result is not None:
+        # Update vertex with framework execution result
+        if hasattr(vertex, "_built_result"):
+            vertex._built_result = result.get("data")
+        if hasattr(vertex, "_execution_time"):
+            vertex._execution_time = result.get("execution_time", 0.0)
+
+        component_id = vertex.data.get("id", "unknown")
+        logger.info("Enhanced vertex execution for framework component: %s", component_id)
+
+    return result
