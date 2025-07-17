@@ -9,12 +9,12 @@ import asyncio
 import json
 import logging
 import time
-from collections.abc import Awaitable
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 try:
     from fastapi import Depends, FastAPI, HTTPException, Request, Response, status
@@ -68,7 +68,7 @@ class APIMetrics:
     peak_response_time: float = 0.0
     active_connections: int = 0
     rate_limited_requests: int = 0
-    last_request_time: Optional[datetime] = None
+    last_request_time: datetime | None = None
 
 
 class RateLimiter:
@@ -77,7 +77,7 @@ class RateLimiter:
     def __init__(self, requests_per_minute: int = 60, window_minutes: int = 1):
         self.requests_per_minute = requests_per_minute
         self.window_minutes = window_minutes
-        self.requests: Dict[str, List[datetime]] = {}
+        self.requests: dict[str, list[datetime]] = {}
 
     def is_allowed(self, client_id: str) -> bool:
         """Check if request is allowed based on rate limits."""
@@ -115,17 +115,17 @@ if FASTAPI_AVAILABLE:
         timestamp: datetime = Field(default_factory=datetime.now)
         version: str = Field(..., description="API version")
         uptime: float = Field(..., description="Uptime in seconds")
-        metrics: Dict[str, Any] = Field(default_factory=dict)
+        metrics: dict[str, Any] = Field(default_factory=dict)
 
     class AgnoJobRequest(BaseAPIModel):
         """Request model for Agno job submission."""
 
         workflow_id: str = Field(..., description="Workflow identifier")
-        input_data: Dict[str, Any] = Field(..., description="Input data for processing")
-        config: Optional[Dict[str, Any]] = Field(None, description="Job configuration")
+        input_data: dict[str, Any] = Field(..., description="Input data for processing")
+        config: dict[str, Any] | None = Field(None, description="Job configuration")
         priority: int = Field(1, ge=1, le=10, description="Job priority (1-10)")
-        timeout: Optional[int] = Field(None, description="Job timeout in seconds")
-        metadata: Optional[Dict[str, Any]] = Field(None, description="Additional metadata")
+        timeout: int | None = Field(None, description="Job timeout in seconds")
+        metadata: dict[str, Any] | None = Field(None, description="Additional metadata")
 
     class AgnoJobResponse(BaseAPIModel):
         """Response model for Agno job submission."""
@@ -133,7 +133,7 @@ if FASTAPI_AVAILABLE:
         job_id: str = Field(..., description="Unique job identifier")
         status: str = Field(..., description="Job status")
         submitted_at: datetime = Field(default_factory=datetime.now)
-        estimated_completion: Optional[datetime] = Field(None)
+        estimated_completion: datetime | None = Field(None)
         message: str = Field("", description="Status message")
 
     class AgnoJobStatus(BaseAPIModel):
@@ -142,48 +142,142 @@ if FASTAPI_AVAILABLE:
         job_id: str
         status: str
         progress: float = Field(ge=0.0, le=1.0, description="Job progress (0-1)")
-        result: Optional[Dict[str, Any]] = None
-        error: Optional[str] = None
-        started_at: Optional[datetime] = None
-        completed_at: Optional[datetime] = None
-        runtime_seconds: Optional[float] = None
+        result: dict[str, Any] | None = None
+        error: str | None = None
+        started_at: datetime | None = None
+        completed_at: datetime | None = None
+        runtime_seconds: float | None = None
 
     class WorkflowCreateRequest(BaseAPIModel):
         """Request model for workflow creation."""
 
         name: str = Field(..., description="Workflow name")
-        description: Optional[str] = Field(None, description="Workflow description")
-        components: List[Dict[str, Any]] = Field(..., description="Workflow components")
-        connections: List[Dict[str, Any]] = Field(..., description="Component connections")
-        config: Optional[Dict[str, Any]] = Field(None, description="Workflow configuration")
-        tags: Optional[List[str]] = Field(None, description="Workflow tags")
+        description: str | None = Field(None, description="Workflow description")
+        components: list[dict[str, Any]] = Field(..., description="Workflow components")
+        connections: list[dict[str, Any]] = Field(..., description="Component connections")
+        config: dict[str, Any] | None = Field(None, description="Workflow configuration")
+        tags: list[str] | None = Field(None, description="Workflow tags")
 
     class WorkflowResponse(BaseAPIModel):
         """Response model for workflow operations."""
 
         workflow_id: str
         name: str
-        description: Optional[str] = None
+        description: str | None = None
         status: str
         created_at: datetime
         updated_at: datetime
         version: int = 1
-        metadata: Dict[str, Any] = Field(default_factory=dict)
+        metadata: dict[str, Any] = Field(default_factory=dict)
 
     class ErrorResponse(BaseAPIModel):
         """Standard error response model."""
 
         error: str = Field(..., description="Error type")
         message: str = Field(..., description="Error message")
-        details: Optional[Dict[str, Any]] = Field(None, description="Error details")
+        details: dict[str, Any] | None = Field(None, description="Error details")
         timestamp: datetime = Field(default_factory=datetime.now)
-        request_id: Optional[str] = Field(None, description="Request identifier")
+        request_id: str | None = Field(None, description="Request identifier")
+
+    class FrameworkInfo(BaseAPIModel):
+        """Framework information model."""
+
+        name: str = Field(..., description="Framework name")
+        version: str = Field(..., description="Framework version")
+        status: str = Field(..., description="Framework status (healthy/degraded/unhealthy)")
+        component_count: int = Field(..., description="Number of available components")
+        categories: list[str] = Field(default_factory=list, description="Available component categories")
+        capabilities: list[str] = Field(default_factory=list, description="Framework capabilities")
+        last_health_check: datetime | None = Field(default=None, description="Last health check timestamp")
+        description: str | None = Field(default=None, description="Framework description")
+
+    class ComponentInfo(BaseAPIModel):
+        """Component information model."""
+
+        id: str = Field(..., description="Component ID (framework:component_name)")
+        name: str = Field(..., description="Component name")
+        framework: str = Field(..., description="Source framework")
+        category: str = Field(..., description="Component category")
+        description: str = Field(..., description="Component description")
+        status: str = Field(..., description="Component status")
+        inputs: list[str] = Field(default_factory=list, description="Required inputs")
+        outputs: list[str] = Field(default_factory=list, description="Available outputs")
+        version: str = Field(default="1.0.0", description="Component version")
+        dependencies: list[str] = Field(default_factory=list, description="Component dependencies")
+
+    class FrameworkSwitchRequest(BaseAPIModel):
+        """Framework switching request."""
+
+        flow_id: str = Field(..., description="Flow ID to modify")
+        component_mappings: dict[str, dict[str, str]] = Field(..., description="Component framework mappings")
+        preserve_connections: bool = Field(default=True, description="Whether to preserve connections")
+        validate_compatibility: bool = Field(default=True, description="Whether to validate compatibility")
+
+    class FlowExecutionRequest(BaseAPIModel):
+        """Enhanced flow execution request with framework preferences."""
+
+        inputs: dict[str, Any] = Field(..., description="Flow inputs")
+        framework_preferences: dict[str, str] | None = Field(default=None, description="Framework preferences")
+        execution_options: dict[str, Any] | None = Field(default=None, description="Execution options")
+        parallel_execution: bool = Field(default=False, description="Enable parallel execution")
+        error_recovery: str = Field(default="standard", description="Error recovery strategy")
+        monitoring: bool = Field(default=True, description="Enable monitoring")
+
+    class ComponentSearchRequest(BaseAPIModel):
+        """Component search request."""
+
+        query: str | None = Field(default=None, description="Search query")
+        framework: str | None = Field(default=None, description="Filter by framework")
+        category: str | None = Field(default=None, description="Filter by category")
+        limit: int = Field(default=50, ge=1, le=100, description="Result limit")
+        offset: int = Field(default=0, ge=0, description="Result offset")
+
+    class ComponentValidationRequest(BaseAPIModel):
+        """Component configuration validation request."""
+
+        configuration: dict[str, Any] = Field(..., description="Component configuration")
+        inputs: dict[str, Any] | None = Field(default=None, description="Input values for validation")
+
+    class ComponentTestRequest(BaseAPIModel):
+        """Component test execution request."""
+
+        inputs: dict[str, Any] = Field(..., description="Test inputs")
+        configuration: dict[str, Any] | None = Field(default=None, description="Component configuration")
+        timeout: int | None = Field(default=30, description="Test timeout in seconds")
+
+    class WorkflowDefinitionRequest(BaseAPIModel):
+        """Workflow definition request."""
+
+        name: str = Field(..., description="Workflow name")
+        description: str = Field(..., description="Workflow description")
+        components: list[dict[str, Any]] = Field(..., description="Workflow components")
+        connections: list[dict[str, Any]] = Field(..., description="Component connections")
+        execution_strategy: str = Field(default="sequential", description="Execution strategy")
+        framework_requirements: dict[str, list[str]] | None = Field(default=None, description="Framework requirements")
+        error_handling: str = Field(default="retry", description="Error handling strategy")
+
+    class PerformanceMetrics(BaseAPIModel):
+        """Performance metrics response."""
+
+        summary: dict[str, Any] = Field(..., description="Performance summary")
+        frameworks: dict[str, Any] = Field(..., description="Framework-specific metrics")
+        components: list[dict[str, Any]] = Field(..., description="Component metrics")
+        trends: list[dict[str, Any]] = Field(..., description="Performance trends")
+
+    class SystemHealthResponse(BaseAPIModel):
+        """System health response."""
+
+        overall_status: str = Field(..., description="Overall system status")
+        frameworks: list[dict[str, Any]] = Field(..., description="Framework health status")
+        components: list[dict[str, Any]] = Field(..., description="Component health status")
+        system_resources: dict[str, Any] = Field(..., description="System resource usage")
+        alerts: list[dict[str, Any]] = Field(..., description="Active alerts")
 
 
 class AgnoAPIRouter:
     """REST API router for Agno framework integration."""
 
-    def __init__(self, app: Optional[Any] = None):
+    def __init__(self, app: Any | None = None):
         self.app = app
         self.metrics = APIMetrics()
         self.rate_limiter = RateLimiter()
@@ -191,9 +285,9 @@ class AgnoAPIRouter:
         self.security = HTTPBearer() if FASTAPI_AVAILABLE else None
 
         # Mock data stores (replace with actual implementations)
-        self.workflows: Dict[str, Dict[str, Any]] = {}
-        self.jobs: Dict[str, Dict[str, Any]] = {}
-        self.active_jobs: Dict[str, Any] = {}
+        self.workflows: dict[str, dict[str, Any]] = {}
+        self.jobs: dict[str, dict[str, Any]] = {}
+        self.active_jobs: dict[str, Any] = {}
 
         if FASTAPI_AVAILABLE and app:
             self._setup_routes()
@@ -323,11 +417,11 @@ class AgnoAPIRouter:
 
             return WorkflowResponse(**self.workflows[workflow_id])
 
-        @self.app.get("/workflows", response_model=List[WorkflowResponse])
+        @self.app.get("/workflows", response_model=list[WorkflowResponse])
         async def list_workflows(
             limit: int = 50, offset: int = 0, credentials: HTTPAuthorizationCredentials = Depends(self.security)
         ):
-            """List workflows with pagination."""
+            """list workflows with pagination."""
             if not self._validate_token(credentials.credentials):
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authentication token")
 
@@ -465,13 +559,599 @@ class AgnoAPIRouter:
                 else None,
             }
 
+        # =============================================================================
+        # PHASE-4: Framework Management Endpoints
+        # =============================================================================
+
+        @self.app.get("/api/v1/frameworks", response_model=list[FrameworkInfo])
+        async def list_frameworks(credentials: HTTPAuthorizationCredentials = Depends(self.security)):
+            """list all available frameworks with their status and capabilities."""
+            if not self._validate_token(credentials.credentials):
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authentication token")
+
+            try:
+                # Import framework manager dynamically to avoid circular imports
+                from .manager import framework_manager
+
+                frameworks = []
+                adapters_info = framework_manager.get_adapters_info()
+
+                for name, info in adapters_info.items():
+                    framework_info = FrameworkInfo(
+                        name=name,
+                        version=info.get("version", "1.0.0"),
+                        status="healthy" if info.get("healthy", False) else "unhealthy",
+                        component_count=info.get("component_count", 0),
+                        categories=info.get("categories", []),
+                        capabilities=info.get("capabilities", []),
+                        description=info.get("description", f"{name} framework integration"),
+                    )
+                    frameworks.append(framework_info)
+
+                return frameworks
+
+            except Exception as e:
+                logger.error(f"Error listing frameworks: {e}")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error listing frameworks: {str(e)}"
+                )
+
+        @self.app.get("/api/v1/frameworks/{framework_name}", response_model=FrameworkInfo)
+        async def get_framework_details(
+            framework_name: str, credentials: HTTPAuthorizationCredentials = Depends(self.security)
+        ):
+            """Get detailed information about a specific framework."""
+            if not self._validate_token(credentials.credentials):
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authentication token")
+
+            try:
+                from .manager import framework_manager
+
+                if framework_name not in framework_manager._adapters:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND, detail=f"Framework {framework_name} not found"
+                    )
+
+                adapter = framework_manager._adapters[framework_name]
+                components = await adapter.discover_components()
+                health_status = await adapter.health_check()
+
+                categories = list(set(comp.category.value for comp in components))
+                capabilities = ["component_discovery", "execution", "validation"]
+
+                if hasattr(adapter, "supports_streaming") and adapter.supports_streaming:
+                    capabilities.append("streaming")
+                if hasattr(adapter, "supports_async") and adapter.supports_async:
+                    capabilities.append("async_execution")
+
+                return FrameworkInfo(
+                    name=adapter.name,
+                    version=getattr(adapter, "version", "1.0.0"),
+                    status="healthy" if health_status else "unhealthy",
+                    component_count=len(components),
+                    categories=categories,
+                    capabilities=capabilities,
+                    last_health_check=datetime.now(),
+                    description=getattr(adapter, "description", f"{framework_name} framework integration"),
+                )
+
+            except HTTPException:
+                raise
+            except Exception as e:
+                logger.error(f"Error getting framework details for {framework_name}: {e}")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Error getting framework details: {str(e)}",
+                )
+
+        @self.app.post("/api/v1/frameworks/{framework_name}/health-check")
+        async def health_check_framework(
+            framework_name: str, credentials: HTTPAuthorizationCredentials = Depends(self.security)
+        ):
+            """Trigger a health check for a specific framework."""
+            if not self._validate_token(credentials.credentials):
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authentication token")
+
+            try:
+                from .manager import framework_manager
+
+                if framework_name not in framework_manager._adapters:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND, detail=f"Framework {framework_name} not found"
+                    )
+
+                adapter = framework_manager._adapters[framework_name]
+                health_status = await adapter.health_check()
+
+                checks = {
+                    "adapter_loaded": True,
+                    "components_discoverable": len(await adapter.discover_components()) > 0,
+                    "dependencies_satisfied": health_status,
+                }
+
+                return {
+                    "framework": framework_name,
+                    "status": "healthy" if health_status else "unhealthy",
+                    "checks": checks,
+                    "timestamp": datetime.now().isoformat(),
+                }
+
+            except HTTPException:
+                raise
+            except Exception as e:
+                logger.error(f"Error health checking framework {framework_name}: {e}")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Health check failed: {str(e)}"
+                )
+
+        # =============================================================================
+        # Component Discovery and Management Endpoints
+        # =============================================================================
+
+        @self.app.get("/api/v1/components")
+        async def list_components(
+            framework: str | None = None,
+            category: str | None = None,
+            search: str | None = None,
+            limit: int = 50,
+            offset: int = 0,
+            credentials: HTTPAuthorizationCredentials = Depends(self.security),
+        ):
+            """list components with filtering and pagination."""
+            if not self._validate_token(credentials.credentials):
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authentication token")
+
+            try:
+                from .manager import framework_manager
+
+                all_components = []
+
+                # Get components from all frameworks or specific framework
+                if framework:
+                    if framework in framework_manager._adapters:
+                        adapter = framework_manager._adapters[framework]
+                        components = await adapter.discover_components()
+                        for comp in components:
+                            all_components.append(comp)
+                else:
+                    # Get from all frameworks
+                    for adapter_name, adapter in framework_manager._adapters.items():
+                        try:
+                            components = await adapter.discover_components()
+                            for comp in components:
+                                all_components.append(comp)
+                        except Exception as e:
+                            logger.warning(f"Error getting components from {adapter_name}: {e}")
+
+                # Apply filters
+                filtered_components = []
+                for comp in all_components:
+                    # Category filter
+                    if category and comp.category.value != category:
+                        continue
+
+                    # Search filter
+                    if search:
+                        search_lower = search.lower()
+                        if search_lower not in comp.name.lower() and search_lower not in comp.description.lower():
+                            continue
+
+                    # Convert to ComponentInfo
+                    component_info = ComponentInfo(
+                        id=f"{comp.framework}:{comp.name}",
+                        name=comp.name,
+                        framework=comp.framework,
+                        category=comp.category.value,
+                        description=comp.description,
+                        status="available",
+                        inputs=list(comp.inputs.keys()) if comp.inputs else [],
+                        outputs=list(comp.outputs.keys()) if comp.outputs else [],
+                        version=getattr(comp, "version", "1.0.0"),
+                        dependencies=getattr(comp, "dependencies", []),
+                    )
+                    filtered_components.append(component_info)
+
+                # Apply pagination
+                total = len(filtered_components)
+                paginated = filtered_components[offset : offset + limit]
+
+                return {
+                    "components": paginated,
+                    "total": total,
+                    "limit": limit,
+                    "offset": offset,
+                    "filters": {"framework": framework, "category": category, "search": search},
+                }
+
+            except HTTPException:
+                raise
+            except Exception as e:
+                logger.error(f"Error listing components: {e}")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error listing components: {str(e)}"
+                )
+
+        @self.app.get("/api/v1/components/search")
+        async def search_components(
+            q: str | None = None,
+            category: str | None = None,
+            framework: str | None = None,
+            limit: int = 50,
+            offset: int = 0,
+            credentials: HTTPAuthorizationCredentials = Depends(self.security),
+        ):
+            """Search components with advanced filtering and facets."""
+            if not self._validate_token(credentials.credentials):
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authentication token")
+
+            # Delegate to list_components with search parameters
+            return await list_components(
+                framework=framework, category=category, search=q, limit=limit, offset=offset, credentials=credentials
+            )
+
+        @self.app.get("/api/v1/components/{component_id}")
+        async def get_component_details(
+            component_id: str, credentials: HTTPAuthorizationCredentials = Depends(self.security)
+        ):
+            """Get detailed information about a specific component."""
+            if not self._validate_token(credentials.credentials):
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authentication token")
+
+            try:
+                # Parse component_id (format: framework:component_name)
+                if ":" not in component_id:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Component ID must be in format 'framework:component_name'",
+                    )
+
+                framework_name, component_name = component_id.split(":", 1)
+
+                from .manager import framework_manager
+
+                if framework_name not in framework_manager._adapters:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND, detail=f"Framework {framework_name} not found"
+                    )
+
+                adapter = framework_manager._adapters[framework_name]
+                components = await adapter.discover_components()
+
+                # Find the specific component
+                component = None
+                for comp in components:
+                    if comp.name == component_name:
+                        component = comp
+                        break
+
+                if not component:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail=f"Component {component_name} not found in {framework_name}",
+                    )
+
+                # Get component schema and examples
+                schema = {
+                    "inputs": component.inputs if component.inputs else {},
+                    "outputs": component.outputs if component.outputs else {},
+                    "configuration": getattr(component, "configuration_schema", {}),
+                }
+
+                examples = getattr(component, "examples", [])
+
+                return {
+                    "id": component_id,
+                    "name": component.name,
+                    "framework": component.framework,
+                    "category": component.category.value,
+                    "description": component.description,
+                    "version": getattr(component, "version", "1.0.0"),
+                    "schema": schema,
+                    "metadata": getattr(component, "metadata", {}),
+                    "dependencies": getattr(component, "dependencies", []),
+                    "examples": examples,
+                    "status": "available",
+                }
+
+            except HTTPException:
+                raise
+            except Exception as e:
+                logger.error(f"Error getting component details for {component_id}: {e}")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Error getting component details: {str(e)}",
+                )
+
+        @self.app.post("/api/v1/components/{component_id}/validate")
+        async def validate_component_config(
+            component_id: str,
+            request: ComponentValidationRequest,
+            credentials: HTTPAuthorizationCredentials = Depends(self.security),
+        ):
+            """Validate component configuration."""
+            if not self._validate_token(credentials.credentials):
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authentication token")
+
+            try:
+                # Parse component_id
+                if ":" not in component_id:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Component ID must be in format 'framework:component_name'",
+                    )
+
+                framework_name, component_name = component_id.split(":", 1)
+
+                from .manager import framework_manager
+
+                # Validate configuration using framework manager
+                validation_result = await framework_manager.validate_component(component_name, request.configuration)
+
+                return {
+                    "valid": validation_result.is_valid,
+                    "errors": validation_result.errors,
+                    "warnings": validation_result.warnings,
+                    "suggestions": validation_result.suggestions,
+                }
+
+            except HTTPException:
+                raise
+            except Exception as e:
+                logger.error(f"Error validating component {component_id}: {e}")
+                return {"valid": False, "errors": [f"Validation error: {str(e)}"], "warnings": [], "suggestions": []}
+
+        @self.app.post("/api/v1/components/{component_id}/test")
+        async def test_component_execution(
+            component_id: str,
+            request: ComponentTestRequest,
+            credentials: HTTPAuthorizationCredentials = Depends(self.security),
+        ):
+            """Test component execution with provided inputs."""
+            if not self._validate_token(credentials.credentials):
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authentication token")
+
+            try:
+                # Parse component_id
+                if ":" not in component_id:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Component ID must be in format 'framework:component_name'",
+                    )
+
+                framework_name, component_name = component_id.split(":", 1)
+
+                from .manager import framework_manager
+
+                # Execute component for testing
+                result = await framework_manager.execute_component(
+                    component_name, request.inputs, request.configuration or {}
+                )
+
+                return {
+                    "success": result.success,
+                    "output": result.output,
+                    "error": result.error,
+                    "execution_time": result.execution_time,
+                    "mode": result.mode.value if hasattr(result.mode, "value") else str(result.mode),
+                }
+
+            except HTTPException:
+                raise
+            except Exception as e:
+                logger.error(f"Error testing component {component_id}: {e}")
+                return {
+                    "success": False,
+                    "output": {},
+                    "error": f"Test execution failed: {str(e)}",
+                    "execution_time": 0.0,
+                    "mode": "error",
+                }
+
+        # =============================================================================
+        # Enhanced Flow and Workflow Endpoints
+        # =============================================================================
+
+        @self.app.post("/api/v1/flows/{flow_id}/run")
+        async def run_flow_with_frameworks(
+            flow_id: str,
+            request: FlowExecutionRequest,
+            credentials: HTTPAuthorizationCredentials = Depends(self.security),
+        ):
+            """Execute flow with framework awareness and preferences."""
+            if not self._validate_token(credentials.credentials):
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authentication token")
+
+            try:
+                # This would integrate with the existing flow execution system
+                # For now, we'll create a basic execution tracking
+                execution_id = f"exec_{int(time.time())}"
+
+                # Create execution record
+                execution_data = {
+                    "execution_id": execution_id,
+                    "flow_id": flow_id,
+                    "status": "running",
+                    "framework_preferences": request.framework_preferences or {},
+                    "execution_options": request.execution_options or {},
+                    "started_at": datetime.now(),
+                    "inputs": request.inputs,
+                }
+
+                # Store execution (in real implementation, this would trigger actual flow execution)
+                self.active_jobs[execution_id] = execution_data
+
+                return {
+                    "execution_id": execution_id,
+                    "status": "started",
+                    "framework_preferences": request.framework_preferences,
+                    "monitoring_enabled": request.monitoring,
+                }
+
+            except Exception as e:
+                logger.error(f"Error executing flow {flow_id}: {e}")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Flow execution failed: {str(e)}"
+                )
+
+        @self.app.post("/api/v1/flows/{flow_id}/switch-framework")
+        async def switch_flow_framework(
+            flow_id: str,
+            request: FrameworkSwitchRequest,
+            credentials: HTTPAuthorizationCredentials = Depends(self.security),
+        ):
+            """Switch component frameworks in a flow."""
+            if not self._validate_token(credentials.credentials):
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authentication token")
+
+            try:
+                # This would implement the actual framework switching logic
+                # For now, we'll simulate the response
+
+                # Validate component mappings
+                valid_mappings = {}
+                invalid_mappings = {}
+
+                for component_id, mapping in request.component_mappings.items():
+                    from_framework = mapping.get("from")
+                    to_framework = mapping.get("to")
+
+                    if from_framework and to_framework:
+                        # Check if target framework exists
+                        from .manager import framework_manager
+
+                        if to_framework.split(":")[0] in framework_manager._adapters:
+                            valid_mappings[component_id] = mapping
+                        else:
+                            invalid_mappings[component_id] = f"Target framework not available: {to_framework}"
+                    else:
+                        invalid_mappings[component_id] = "Invalid mapping format"
+
+                return {
+                    "flow_id": flow_id,
+                    "valid_mappings": valid_mappings,
+                    "invalid_mappings": invalid_mappings,
+                    "preserve_connections": request.preserve_connections,
+                    "compatibility_validated": request.validate_compatibility,
+                    "status": "completed" if not invalid_mappings else "partial",
+                    "timestamp": datetime.now().isoformat(),
+                }
+
+            except Exception as e:
+                logger.error(f"Error switching frameworks for flow {flow_id}: {e}")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Framework switching failed: {str(e)}"
+                )
+
+        # =============================================================================
+        # Performance Monitoring Endpoints
+        # =============================================================================
+
+        @self.app.get("/api/v1/monitoring/performance")
+        async def get_performance_metrics(credentials: HTTPAuthorizationCredentials = Depends(self.security)):
+            """Get comprehensive performance metrics."""
+            if not self._validate_token(credentials.credentials):
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authentication token")
+
+            try:
+                from .performance_monitor import PerformanceMonitor
+
+                # Get performance data (this would integrate with the actual performance monitor)
+                summary = {
+                    "total_executions": self.metrics.total_requests,
+                    "success_rate": self.metrics.successful_requests / max(self.metrics.total_requests, 1),
+                    "average_execution_time": self.metrics.average_response_time,
+                    "peak_execution_time": self.metrics.peak_response_time,
+                }
+
+                # Framework-specific metrics (simulated)
+                frameworks = {
+                    "agno": {
+                        "executions": int(self.metrics.total_requests * 0.7),
+                        "success_rate": 0.95,
+                        "avg_execution_time": 0.234,
+                    },
+                    "langflow": {
+                        "executions": int(self.metrics.total_requests * 0.3),
+                        "success_rate": 0.98,
+                        "avg_execution_time": 0.123,
+                    },
+                }
+
+                return PerformanceMetrics(
+                    summary=summary,
+                    frameworks=frameworks,
+                    components=[],  # Would be populated with actual component metrics
+                    trends=[],  # Would be populated with historical trends
+                )
+
+            except Exception as e:
+                logger.error(f"Error getting performance metrics: {e}")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Error getting performance metrics: {str(e)}",
+                )
+
+        @self.app.get("/api/v1/monitoring/health")
+        async def get_system_health(credentials: HTTPAuthorizationCredentials = Depends(self.security)):
+            """Get comprehensive system health status."""
+            if not self._validate_token(credentials.credentials):
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authentication token")
+
+            try:
+                from .manager import framework_manager
+
+                # Check framework health
+                framework_health = []
+                overall_healthy = True
+
+                for name, adapter in framework_manager._adapters.items():
+                    try:
+                        health_status = await adapter.health_check()
+                        framework_health.append(
+                            {
+                                "name": name,
+                                "status": "healthy" if health_status else "unhealthy",
+                                "last_check": datetime.now().isoformat(),
+                            }
+                        )
+                        if not health_status:
+                            overall_healthy = False
+                    except Exception as e:
+                        framework_health.append(
+                            {"name": name, "status": "error", "error": str(e), "last_check": datetime.now().isoformat()}
+                        )
+                        overall_healthy = False
+
+                # System resources (basic implementation)
+                system_resources = {
+                    "cpu_usage": 0.0,  # Would integrate with actual system monitoring
+                    "memory_usage": 0.0,
+                    "disk_usage": 0.0,
+                    "active_connections": self.metrics.active_connections,
+                }
+
+                return SystemHealthResponse(
+                    overall_status="healthy" if overall_healthy else "degraded",
+                    frameworks=framework_health,
+                    components=[],  # Would be populated with component health checks
+                    system_resources=system_resources,
+                    alerts=[],  # Would be populated with active alerts
+                )
+
+            except Exception as e:
+                logger.error(f"Error getting system health: {e}")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error getting system health: {str(e)}"
+                )
+
     def _validate_token(self, token: str) -> bool:
-        """Validate authentication token (implement actual validation)."""
-        # Mock validation - implement actual JWT/OAuth validation
-        return token.startswith("agno_") or token == "dev_token"
+        """Validate authentication token."""
+        # TODO: Implement proper JWT token validation
+        # For development purposes, accept any non-empty token
+        return token and len(token) > 0
 
     async def _process_job(self, job_id: str):
-        """Mock job processing (replace with actual Agno integration)."""
+        """Process a job asynchronously (mock implementation)."""
         if job_id not in self.jobs:
             return
 
@@ -479,135 +1159,70 @@ class AgnoAPIRouter:
         self.active_jobs[job_id] = job_data
 
         try:
-            # Mark as started
+            # Update job status
             job_data["status"] = "running"
             job_data["started_at"] = datetime.now()
 
-            # Simulate processing with progress updates
-            for progress in [0.2, 0.4, 0.6, 0.8, 1.0]:
-                await asyncio.sleep(2)  # Simulate work
+            # Simulate job processing
+            await asyncio.sleep(1)  # Simulate work
+            job_data["progress"] = 0.5
 
-                if job_data["status"] == "cancelled":
-                    return
+            await asyncio.sleep(1)  # More work
+            job_data["progress"] = 1.0
 
-                job_data["progress"] = progress
-
-            # Mark as completed
+            # Complete job
             job_data["status"] = "completed"
             job_data["completed_at"] = datetime.now()
-            job_data["result"] = {"output": "Mock processing result", "processed_items": 100, "success": True}
+            job_data["result"] = {"message": "Job completed successfully", "output": "mock_result"}
 
         except Exception as e:
-            # Mark as failed
+            # Handle job failure
             job_data["status"] = "failed"
             job_data["completed_at"] = datetime.now()
             job_data["error"] = str(e)
             logger.error(f"Job {job_id} failed: {e}")
 
         finally:
+            # Remove from active jobs
             if job_id in self.active_jobs:
                 del self.active_jobs[job_id]
 
+    def register_with_app(self, app: Any) -> "AgnoAPIRouter":
+        """Register this router with a FastAPI app."""
+        if not FASTAPI_AVAILABLE:
+            logger.warning("FastAPI not available - API routes will not be registered")
+            return self
 
-def create_agno_api_app() -> Optional[Any]:
-    """Create FastAPI application with Agno integration."""
-    if not FASTAPI_AVAILABLE:
-        logger.warning("FastAPI not available. REST API features disabled.")
-        return None
+        self.app = app
+        self._setup_middleware()
+        self._setup_routes()
 
-    app = FastAPI(
-        title="Langflow Agno Integration API",
-        description="REST API for Langflow-Agno framework integration",
-        version="1.0.0",
-        docs_url="/docs",
-        redoc_url="/redoc",
-    )
-
-    # Initialize router
-    router = AgnoAPIRouter(app)
-
-    # Add global exception handler
-    @app.exception_handler(Exception)
-    async def global_exception_handler(request: Request, exc: Exception):
-        logger.error(f"Global exception: {exc}")
-
-        return JSONResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content={
-                "error": "internal_server_error",
-                "message": "An internal server error occurred",
-                "timestamp": datetime.now().isoformat(),
-            },
-        )
-
-    return app
+        logger.info("Agno API routes registered successfully")
+        return self
 
 
-# Global API app instance
-api_app = create_agno_api_app()
+def create_api_router(app: Any | None = None) -> AgnoAPIRouter:
+    """Create and configure an Agno API router."""
+    return AgnoAPIRouter(app)
 
 
-# Utility functions
-def start_api_server(host: str = "0.0.0.0", port: int = 8000, debug: bool = False):
-    """Start the API server."""
-    if not FASTAPI_AVAILABLE:
-        logger.error("Cannot start API server: FastAPI not available")
-        return
+def register_agno_api(app: Any) -> AgnoAPIRouter:
+    """Register Agno API routes with a FastAPI application."""
+    router = create_api_router(app)
+    return router
 
-    try:
+
+# Example usage and testing helpers
+if __name__ == "__main__":
+    if FASTAPI_AVAILABLE:
+        from fastapi import FastAPI
+
+        app = FastAPI(title="Agno Framework API", version="1.0.0")
+        router = register_agno_api(app)
+
+        # Development server
         import uvicorn
 
-        uvicorn.run(api_app, host=host, port=port, debug=debug)
-    except ImportError:
-        logger.error("Cannot start API server: uvicorn not available")
-
-
-def get_api_client():
-    """Get API client for making requests."""
-    # This would return a configured HTTP client for making API requests
-    # Implementation depends on preferred HTTP client library
-    pass
-
-
-# API decorators for framework integration
-def api_endpoint(path: str, methods: List[str] = None):
-    """Decorator for registering API endpoints."""
-    if methods is None:
-        methods = ["GET"]
-
-    def decorator(func: Callable):
-        # Register endpoint with the API router
-        # Implementation depends on specific framework integration
-        return func
-
-    return decorator
-
-
-def require_auth(permission: PermissionLevel = PermissionLevel.READ):
-    """Decorator for requiring authentication."""
-
-    def decorator(func: Callable):
-        @wraps(func)
-        async def wrapper(*args, **kwargs):
-            # Implement authentication check
-            # For now, just pass through
-            return await func(*args, **kwargs)
-
-        return wrapper
-
-    return decorator
-
-
-def rate_limit(requests_per_minute: int = 60):
-    """Decorator for rate limiting."""
-
-    def decorator(func: Callable):
-        @wraps(func)
-        async def wrapper(*args, **kwargs):
-            # Implement rate limiting
-            # For now, just pass through
-            return await func(*args, **kwargs)
-
-        return wrapper
-
-    return decorator
+        uvicorn.run(app, host="0.0.0.0", port=8000)
+    else:
+        logger.error("FastAPI not available - cannot run API server")

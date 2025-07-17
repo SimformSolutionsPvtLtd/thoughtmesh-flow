@@ -23,6 +23,7 @@ import { AppAuthenticatedPage } from "./pages/AppAuthenticatedPage";
 import { AppInitPage } from "./pages/AppInitPage";
 import { AppWrapperPage } from "./pages/AppWrapperPage";
 import FlowPage from "./pages/FlowPage";
+import FrameworkSettingsPage from "./pages/FrameworkSettingsPage";
 import LoginPage from "./pages/LoginPage";
 import FilesPage from "./pages/MainPage/pages/filesPage";
 import HomePage from "./pages/MainPage/pages/homePage";
@@ -126,6 +127,7 @@ const router = createBrowserRouter(
                     element={<GlobalVariablesPage />}
                   />
                   <Route path="mcp-servers" element={<MCPServersPage />} />
+                  <Route path="frameworks" element={<FrameworkSettingsPage />} />
                   <Route path="api-keys" element={<ApiKeysPage />} />
                   <Route
                     path="general/:scrollId?"

@@ -1,5 +1,6 @@
 import useFlowStore from "@/stores/flowStore";
 import { useState } from "react";
+import { FrameworkStatusIndicator } from "../../../FrameworkStatusIndicator";
 import PublishDropdown from "./deploy-dropdown";
 import PlaygroundButton from "./playground-button";
 
@@ -17,6 +18,7 @@ export default function FlowToolbarOptions() {
           canvasOpen
         />
       </div>
+      <FrameworkStatusIndicator />
       <PublishDropdown />
     </div>
   );

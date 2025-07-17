@@ -4,9 +4,14 @@ import { RouterProvider } from "react-router-dom";
 import { LoadingPage } from "./pages/LoadingPage";
 import router from "./routes";
 import { useDarkStore } from "./stores/darkStore";
+import { useFrameworkInitialization } from "./hooks/useFrameworkInitialization";
 
 export default function App() {
   const dark = useDarkStore((state) => state.dark);
+  
+  // Initialize frameworks on app start
+  useFrameworkInitialization();
+  
   useEffect(() => {
     if (!dark) {
       document.getElementById("body")!.classList.remove("dark");
@@ -14,6 +19,7 @@ export default function App() {
       document.getElementById("body")!.classList.add("dark");
     }
   }, [dark]);
+  
   return (
     <Suspense fallback={<LoadingPage />}>
       <RouterProvider router={router} />
