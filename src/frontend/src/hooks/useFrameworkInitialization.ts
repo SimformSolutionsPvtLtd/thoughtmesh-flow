@@ -6,17 +6,19 @@ import { useFrameworkStore } from "../stores/frameworkStore";
  * Call this in your main App component or a high-level component
  */
 export const useFrameworkInitialization = () => {
-  const { loadFrameworks, frameworks } = useFrameworkStore();
+  const { initialize, frameworks, selectedFramework } = useFrameworkStore();
 
   useEffect(() => {
-    // Only load if we don't already have frameworks loaded
+    // Only initialize if we don't already have frameworks loaded
     // Ensure frameworks is an array before checking length
     const safeFrameworks = Array.isArray(frameworks) ? frameworks : [];
     if (safeFrameworks.length === 0) {
-      console.log('Loading frameworks from useFrameworkInitialization...');
-      loadFrameworks();
+      console.log('Initializing framework store...');
+      initialize().catch(console.error);
     }
-  }, [loadFrameworks, frameworks]);
+  }, [initialize, frameworks]);
+
+  return { selectedFramework, isInitialized: frameworks.length > 0 };
 };
 
 export default useFrameworkInitialization;

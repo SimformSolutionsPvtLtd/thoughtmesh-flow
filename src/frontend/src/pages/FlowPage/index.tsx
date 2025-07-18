@@ -6,6 +6,7 @@ import useSaveFlow from "@/hooks/flows/use-save-flow";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SaveChangesModal } from "@/modals/saveChangesModal";
 import useAlertStore from "@/stores/alertStore";
+import { useFrameworkStore } from "@/stores/frameworkStore";
 import { useTypesStore } from "@/stores/typesStore";
 import { customStringify } from "@/utils/reactflowUtils";
 import { useEffect, useState } from "react";
@@ -17,9 +18,10 @@ import { FlowSidebarComponent } from "./components/flowSidebarComponent";
 
 export default function FlowPage({ view }: { view?: boolean }): JSX.Element {
   const types = useTypesStore((state) => state.types);
+  const { selectedFramework } = useFrameworkStore();
 
   useGetTypes({
-    enabled: Object.keys(types).length <= 0,
+    enabled: Object.keys(types).length <= 0 || !!selectedFramework, // Always enabled if framework is selected
   });
 
   const setCurrentFlow = useFlowsManagerStore((state) => state.setCurrentFlow);

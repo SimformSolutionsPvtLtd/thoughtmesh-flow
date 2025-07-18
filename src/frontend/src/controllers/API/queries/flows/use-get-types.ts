@@ -1,4 +1,5 @@
 import useFlowsManagerStore from "@/stores/flowsManagerStore";
+import { useFrameworkStore } from "@/stores/frameworkStore";
 import { useTypesStore } from "@/stores/typesStore";
 import { APIObjectType, useQueryFunctionType } from "../../../../types/api";
 import { api } from "../../api";
@@ -13,6 +14,7 @@ export const useGetTypes: useQueryFunctionType<
   const { query } = UseRequestProcessor();
   const setLoading = useFlowsManagerStore((state) => state.setIsLoading);
   const setTypes = useTypesStore((state) => state.setTypes);
+  const { selectedFramework, loadComponents, components } = useFrameworkStore();
 
   const getTypesFn = async (checkCache = false) => {
     try {
@@ -23,6 +25,20 @@ export const useGetTypes: useQueryFunctionType<
         }
       }
 
+      // Use framework-specific component loading if a framework is selected
+      if (selectedFramework && selectedFramework !== "all") {
+        console.log(`Loading components for framework: ${selectedFramework}`);
+        
+        // Use the enhanced /all endpoint with framework parameter for backward compatibility
+        const response = await api.get<APIObjectType>(
+          `${getURL("ALL")}?framework=${selectedFramework}&force_refresh=true`,
+        );
+        const data = response?.data;
+        setTypes(data);
+        return data;
+      }
+
+      // Fallback to original /all endpoint if no specific framework selected
       const response = await api.get<APIObjectType>(
         `${getURL("ALL")}?force_refresh=true`,
       );
@@ -37,7 +53,7 @@ export const useGetTypes: useQueryFunctionType<
   };
 
   const queryResult = query(
-    ["useGetTypes"],
+    ["useGetTypes", selectedFramework], // Include selectedFramework in query key
     () => getTypesFn(options?.checkCache),
     {
       refetchOnWindowFocus: false,

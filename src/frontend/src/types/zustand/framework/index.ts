@@ -49,6 +49,7 @@ export type FrameworkStoreType = {
   refreshFrameworkHealth: (framework: string) => Promise<void>;
   switchComponentFramework: (flowId: string, componentMappings: Record<string, {from: string, to: string}>) => Promise<void>;
   clearError: () => void;
+  initialize: () => Promise<void>;
   
   // Framework context for flows
   flowFrameworkContext: Record<string, FrameworkPreferences>;

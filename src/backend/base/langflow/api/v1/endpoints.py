@@ -61,16 +61,116 @@ router = APIRouter(tags=["Base"])
 
 
 @router.get("/all", dependencies=[Depends(get_current_active_user)])
-async def get_all():
+async def get_all(framework: str | None = None):
     """Retrieve all component types with compression for better performance.
+
+    Args:
+        framework: Optional framework filter. When provided, only components from that framework are returned.
 
     Returns a compressed response containing all available component types.
     """
     from langflow.interface.components import get_and_cache_all_types_dict
 
     try:
+        # Get all components first
         all_types = await get_and_cache_all_types_dict(settings_service=get_settings_service())
-        # Return compressed response using our utility function
+
+        if framework and framework != "all":
+            # For specific framework filtering
+            if framework == "langflow":
+                # For langflow, return all the original components (they are all langflow components)
+                return compress_response(all_types)
+            else:
+                # For other frameworks, use framework manager filtering
+                from langflow.core.frameworks import get_framework_manager
+                from langflow.core.frameworks.types import FrameworkType
+
+                manager = get_framework_manager()
+                # Framework manager should already be initialized during startup
+                if not manager._initialized:
+                    logger.warning("Framework manager not initialized, initializing now (this may cause timeout)")
+                    await manager.initialize()
+
+                # Convert string to FrameworkType for comparison
+                try:
+                    framework_type = FrameworkType(framework.lower())
+                except ValueError:
+                    logger.warning(f"Unknown framework: {framework}")
+                    return compress_response({})
+
+                if framework_type in manager.get_available_frameworks():
+                    logger.debug(f"Framework {framework} found in available frameworks")
+                    components = await manager.get_all_components(framework_filter=framework_type)
+                    logger.debug(f"Got {len(components)} components from framework manager")
+
+                    # Convert to the expected format for backward compatibility
+                    framework_types = {}
+                    for comp in components:
+                        category = getattr(comp, "category", "unknown")
+                        if hasattr(comp.category, "value"):
+                            category = comp.category.value
+                        if category not in framework_types:
+                            framework_types[category] = {}
+
+                        # Convert component metadata to proper frontend format
+                        template = {"_type": comp.name}
+                        
+                        # Convert inputs to template format
+                        for input_def in getattr(comp, "inputs", []):
+                            template[input_def.name] = {
+                                "type": getattr(input_def, "type", "str"),
+                                "required": getattr(input_def, "required", False),
+                                "placeholder": "",
+                                "list": False,
+                                "show": True,
+                                "multiline": False,
+                                "value": getattr(input_def, "default", None),
+                                "advanced": getattr(input_def, "advanced", False),
+                                "display_name": getattr(input_def, "display_name", input_def.name),
+                                "info": getattr(input_def, "description", ""),
+                                "_input_type": "StrInput",  # Default input type
+                            }
+                            # Set input type based on the field type
+                            if hasattr(input_def, "options") and input_def.options:
+                                template[input_def.name]["options"] = input_def.options
+                                template[input_def.name]["_input_type"] = "DropdownInput"
+                            elif getattr(input_def, "type", "str") == "boolean":
+                                template[input_def.name]["_input_type"] = "BoolInput"
+                            elif getattr(input_def, "type", "str") == "number":
+                                template[input_def.name]["_input_type"] = "FloatInput"
+                                if hasattr(input_def, "min_value"):
+                                    template[input_def.name]["min"] = input_def.min_value
+                                if hasattr(input_def, "max_value"):
+                                    template[input_def.name]["max"] = input_def.max_value
+                            elif getattr(input_def, "type", "str") in ["Model", "VectorDb", "Agent", "Tool"]:
+                                template[input_def.name]["_input_type"] = "HandleInput"
+                                template[input_def.name]["input_types"] = [input_def.type]
+
+                        # Generate base classes from outputs
+                        base_classes = []
+                        output_types = []
+                        for output_def in getattr(comp, "outputs", []):
+                            output_type = getattr(output_def, "type", "Text")
+                            if output_type not in base_classes:
+                                base_classes.append(output_type)
+                            if output_type not in output_types:
+                                output_types.append(output_type)
+
+                        framework_types[category][comp.name] = {
+                            "type": comp.name,
+                            "base_classes": base_classes,
+                            "template": template,
+                            "description": getattr(comp, "description", ""),
+                            "display_name": getattr(comp, "display_name", comp.name),
+                            "framework": framework,
+                            "version": getattr(comp, "version", "1.0.0"),
+                            "output_types": output_types,
+                            "icon": getattr(comp, "icon", None),
+                        }
+
+                    return compress_response(framework_types)
+
+        # Fallback to original behavior for all frameworks
         return compress_response(all_types)
 
     except Exception as exc:

@@ -11,10 +11,10 @@ export const useFrameworkStore = create<FrameworkStoreType>()(
       // Initial state - ensure all arrays are properly initialized
       frameworks: [],
       components: [],
-      selectedFramework: null,
+      selectedFramework: "langflow", // Default to langflow framework
       frameworkPreferences: {
-        agno: 'preferred',
-        langflow: 'fallback'
+        langflow: 'preferred',
+        agno: 'fallback'
       },
       loading: false,
       componentsLoading: false,
@@ -24,6 +24,8 @@ export const useFrameworkStore = create<FrameworkStoreType>()(
       // Actions
       setSelectedFramework: (framework: string) => {
         set({ selectedFramework: framework });
+        // Automatically load components for the new framework
+        get().loadComponents(framework === "all" ? undefined : framework);
       },
 
       setFrameworkPreferences: (preferences: FrameworkPreferences) => {
@@ -183,6 +185,19 @@ export const useFrameworkStore = create<FrameworkStoreType>()(
 
       clearError: () => {
         set({ error: null });
+      },
+
+      // Initialize the framework store - load frameworks and default components
+      initialize: async () => {
+        const state = get();
+        
+        // Load available frameworks first
+        await state.loadFrameworks();
+        
+        // Load components for the selected framework (defaults to "langflow")
+        if (state.selectedFramework) {
+          await state.loadComponents(state.selectedFramework === "all" ? undefined : state.selectedFramework);
+        }
       }
     }),
     {

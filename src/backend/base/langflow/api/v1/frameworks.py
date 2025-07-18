@@ -276,9 +276,17 @@ async def list_components(
 
         # Get components from specified framework or all frameworks
         if framework and framework != "all":
-            if framework not in manager.get_available_frameworks():
+            # Convert string to FrameworkType enum
+            try:
+                framework_type = FrameworkType(framework)
+            except ValueError:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail=f"Framework {framework} not found"
+                ) from None
+
+            if framework_type not in manager.get_available_frameworks():
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Framework {framework} not found")
-            all_components = await manager.get_all_components(framework_filter=framework)
+            all_components = await manager.get_all_components(framework_filter=framework_type)
         else:
             all_components = await manager.get_all_components()
 
