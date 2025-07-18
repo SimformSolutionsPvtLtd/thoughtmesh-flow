@@ -14,13 +14,29 @@ import useFlowStore from "../../stores/flowStore";
 import useFlowsManagerStore from "../../stores/flowsManagerStore";
 import Page from "./components/PageComponent";
 import { FlowSidebarComponent } from "./components/flowSidebarComponent";
+import { useFrameworkStore } from "@/components/frameworkSwitcher";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function FlowPage({ view }: { view?: boolean }): JSX.Element {
   const types = useTypesStore((state) => state.types);
+  const selectedFramework = useFrameworkStore((state) => state.selectedFramework);
+  const queryClient = useQueryClient();
 
-  useGetTypes({
+  const { refetch: refetchTypes } = useGetTypes({
     enabled: Object.keys(types).length <= 0,
   });
+
+  // Force refresh types when framework changes
+  useEffect(() => {
+    if (selectedFramework) {
+      console.log("Framework changed to:", selectedFramework, "- refreshing types");
+      // Clear types store
+      useTypesStore.getState().setTypes({});
+      // Invalidate and refetch types query
+      queryClient.invalidateQueries({ queryKey: ["useGetTypes"] });
+      refetchTypes();
+    }
+  }, [selectedFramework, queryClient, refetchTypes]);
 
   const setCurrentFlow = useFlowsManagerStore((state) => state.setCurrentFlow);
   const currentFlow = useFlowStore((state) => state.currentFlow);

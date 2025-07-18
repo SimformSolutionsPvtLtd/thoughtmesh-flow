@@ -8,85 +8,88 @@ import { ForwardedIconComponent } from "@/components/common/genericIconComponent
 import ShadTooltip from "@/components/common/shadTooltipComponent";
 import { Button } from "@/components/ui/button";
 import { SidebarHeader, SidebarTrigger } from "@/components/ui/sidebar";
+import { FrameworkSwitcher } from "@/components/frameworkSwitcher";
 import { memo } from "react";
 import { SidebarHeaderComponentProps } from "../../types";
 import FeatureToggles from "../featureTogglesComponent";
 import { SearchInput } from "../searchInput";
 import { SidebarFilterComponent } from "../sidebarFilterComponent";
 
-export const SidebarHeaderComponent = memo(function SidebarHeaderComponent({
-  showConfig,
-  setShowConfig,
-  showBeta,
-  setShowBeta,
-  showLegacy,
-  setShowLegacy,
-  searchInputRef,
-  isInputFocused,
-  search,
-  handleInputFocus,
-  handleInputBlur,
-  handleInputChange,
-  filterType,
-  setFilterEdge,
-  setFilterData,
-  data,
-}: SidebarHeaderComponentProps) {
-  return (
-    <SidebarHeader className="flex w-full flex-col gap-4 p-4 pb-1">
-      <Disclosure open={showConfig} onOpenChange={setShowConfig}>
-        <div className="flex w-full items-center gap-2">
-          <SidebarTrigger className="text-muted-foreground">
-            <ForwardedIconComponent name="PanelLeftClose" />
-          </SidebarTrigger>
-          <h3 className="flex-1 text-sm font-semibold">Components</h3>
-          <DisclosureTrigger>
-            <div>
-              <ShadTooltip content="Component settings" styleClasses="z-50">
-                <Button
-                  variant={showConfig ? "ghostActive" : "ghost"}
-                  size="iconMd"
-                  data-testid="sidebar-options-trigger"
-                >
-                  <ForwardedIconComponent
-                    name="SlidersHorizontal"
-                    className="h-4 w-4"
-                  />
-                </Button>
-              </ShadTooltip>
-            </div>
-          </DisclosureTrigger>
-        </div>
-        <DisclosureContent>
-          <FeatureToggles
+const SidebarHeaderComponent = memo(
+  ({
+    showConfig,
+    setShowConfig,
+    showBeta,
+    setShowBeta,
+    showLegacy,
+    setShowLegacy,
+    searchInputRef,
+    isInputFocused,
+    search,
+    handleInputFocus,
+    handleInputBlur,
+    handleInputChange,
+    filterType,
+    setFilterEdge,
+    setFilterData,
+    data,
+  }: SidebarHeaderComponentProps) => {
+    return (
+      <SidebarHeader className="flex h-fit min-h-fit flex-col gap-2 p-4">
+        <div className="flex items-center justify-between">
+          <SidebarTrigger className="-ml-1" />
+          <FeatureToggles 
             showBeta={showBeta}
             setShowBeta={setShowBeta}
             showLegacy={showLegacy}
             setShowLegacy={setShowLegacy}
           />
-        </DisclosureContent>
-      </Disclosure>
-      <SearchInput
-        searchInputRef={searchInputRef}
-        isInputFocused={isInputFocused}
-        search={search}
-        handleInputFocus={handleInputFocus}
-        handleInputBlur={handleInputBlur}
-        handleInputChange={handleInputChange}
-      />
-      {filterType && (
-        <SidebarFilterComponent
-          isInput={!!filterType.source}
-          type={filterType.type}
-          color={filterType.color}
-          resetFilters={() => {
-            setFilterEdge([]);
-            setFilterData(data);
-          }}
-        />
-      )}
-    </SidebarHeader>
-  );
-});
+        </div>
+        <div className="flex flex-col gap-2">
+          <FrameworkSwitcher />
+          <SearchInput 
+            searchInputRef={searchInputRef}
+            isInputFocused={isInputFocused}
+            search={search}
+            handleInputFocus={handleInputFocus}
+            handleInputBlur={handleInputBlur}
+            handleInputChange={handleInputChange}
+          />
+          <Disclosure>
+            <DisclosureTrigger>
+              <ShadTooltip content="Filter components">
+                <Button
+                  className="w-full justify-start"
+                  variant="ghost"
+                  size="sm"
+                >
+                  <ForwardedIconComponent
+                    name="Settings"
+                    className="mr-2 h-4 w-4 text-muted-foreground"
+                  />
+                  Filters
+                </Button>
+              </ShadTooltip>
+            </DisclosureTrigger>
+            <DisclosureContent>
+              <SidebarFilterComponent 
+                isInput={false}
+                type={filterType?.type || ""}
+                color={filterType?.color || ""}
+                resetFilters={() => {
+                  setFilterEdge([]);
+                  setFilterData(data);
+                }}
+              />
+            </DisclosureContent>
+          </Disclosure>
+        </div>
+      </SidebarHeader>
+    );
+  },
+);
 
 SidebarHeaderComponent.displayName = "SidebarHeaderComponent";
+
+export { SidebarHeaderComponent };
+export default SidebarHeaderComponent;

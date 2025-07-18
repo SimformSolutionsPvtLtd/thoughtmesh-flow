@@ -1792,26 +1792,81 @@ export function removeGlobalVariableFromComponents(flow: FlowType) {
 }
 
 export function typesGenerator(data: APIObjectType) {
+  if (!data || typeof data !== 'object') {
+    console.warn('typesGenerator: Invalid data provided', data);
+    return {};
+  }
+  
   return Object.keys(data)
     .reverse()
     .reduce((acc, curr) => {
-      Object.keys(data[curr]).forEach((c: keyof APIKindType) => {
-        acc[c] = curr;
-        // Add the base classes to the accumulator as well.
-        data[curr][c].base_classes?.forEach((b) => {
-          acc[b] = curr;
+      try {
+        // Ensure data[curr] exists and is an object
+        if (!data[curr] || typeof data[curr] !== 'object') {
+          console.warn(`typesGenerator: Invalid category data for ${curr}`, data[curr]);
+          return acc;
+        }
+        
+        Object.keys(data[curr]).forEach((c: keyof APIKindType) => {
+          try {
+            // Ensure the component exists
+            if (!data[curr][c] || typeof data[curr][c] !== 'object') {
+              console.warn(`typesGenerator: Invalid component data for ${curr}.${c}`, data[curr][c]);
+              return;
+            }
+            
+            acc[c] = curr;
+            // Add the base classes to the accumulator as well.
+            const baseClasses = data[curr][c].base_classes;
+            if (Array.isArray(baseClasses)) {
+              baseClasses.forEach((b) => {
+                if (typeof b === 'string') {
+                  acc[b] = curr;
+                }
+              });
+            }
+          } catch (error) {
+            console.warn(`typesGenerator: Error processing component ${curr}.${c}`, error);
+          }
         });
-      });
+      } catch (error) {
+        console.warn(`typesGenerator: Error processing category ${curr}`, error);
+      }
       return acc;
     }, {});
 }
 
 export function templatesGenerator(data: APIObjectType) {
+  if (!data || typeof data !== 'object') {
+    console.warn('templatesGenerator: Invalid data provided', data);
+    return {};
+  }
+  
   return Object.keys(data).reduce((acc, curr) => {
-    Object.keys(data[curr]).forEach((c: keyof APIKindType) => {
-      //prevent wrong overwriting of the component template by a group of the same type
-      if (!data[curr][c].flow) acc[c] = data[curr][c];
-    });
+    try {
+      // Ensure data[curr] exists and is an object
+      if (!data[curr] || typeof data[curr] !== 'object') {
+        console.warn(`templatesGenerator: Invalid category data for ${curr}`, data[curr]);
+        return acc;
+      }
+      
+      Object.keys(data[curr]).forEach((c: keyof APIKindType) => {
+        try {
+          // Ensure the component exists
+          if (!data[curr][c] || typeof data[curr][c] !== 'object') {
+            console.warn(`templatesGenerator: Invalid component data for ${curr}.${c}`, data[curr][c]);
+            return;
+          }
+          
+          //prevent wrong overwriting of the component template by a group of the same type
+          if (!data[curr][c].flow) acc[c] = data[curr][c];
+        } catch (error) {
+          console.warn(`templatesGenerator: Error processing component ${curr}.${c}`, error);
+        }
+      });
+    } catch (error) {
+      console.warn(`templatesGenerator: Error processing category ${curr}`, error);
+    }
     return acc;
   }, {});
 }

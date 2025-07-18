@@ -9,6 +9,7 @@ from langflow.api.utils import CurrentActiveUser
 from langflow.core.frameworks import get_framework_manager
 from langflow.core.frameworks.exceptions import FrameworkError
 from langflow.core.frameworks.types import ComponentMetadata, FrameworkType
+from langflow.utils.compression import compress_response
 
 router = APIRouter(prefix="/frameworks", tags=["Frameworks"])
 
@@ -53,12 +54,12 @@ async def list_frameworks(
         ) from e
 
 
-@router.get("/{framework}/components", response_model=ComponentListResponse)
+@router.get("/{framework}/components")
 async def list_framework_components(
     framework: FrameworkType,
     _: CurrentActiveUser,
-) -> ComponentListResponse:
-    """List components available in a specific framework."""
+):
+    """List components available in a specific framework with same structure as /all endpoint."""
     try:
         manager = get_framework_manager()
 
@@ -70,7 +71,10 @@ async def list_framework_components(
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Framework {framework} is not available")
 
         components = await manager.get_all_components(framework_filter=framework)
-        return ComponentListResponse(components=components)
+        
+        # Convert to the same structure as /all endpoint
+        categorized_components = _categorize_framework_components(components)
+        return compress_response(categorized_components)
     except HTTPException:
         raise
     except FrameworkError as e:
@@ -78,6 +82,157 @@ async def list_framework_components(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to list components for framework {framework}: {e!s}",
         ) from e
+
+
+def _categorize_framework_components(components: list[ComponentMetadata]) -> dict[str, dict[str, dict]]:
+    """Categorize framework components to match /all endpoint structure."""
+    # For framework-specific endpoints, organize by component category (Models, Tools, etc.)
+    # to match the structure expected by frontend utilities
+    
+    categorized = {}
+    
+    for component in components:
+        # Convert ComponentMetadata to the format expected by /all endpoint
+        component_dict = _convert_component_metadata_to_all_format(component)
+        
+        # Skip components that couldn't be converted (invalid data)
+        if component_dict is None:
+            continue
+        
+        # Determine category for proper organization
+        category_name = component.category or "Models"  # Default to Models for agno components
+        
+        # For better categorization, let's use component names to determine categories
+        if not component.category:
+            display_name = component.display_name.lower()
+            if any(keyword in display_name for keyword in ["tools", "search", "calculator", "file", "arxiv", "reasoning"]):
+                category_name = "Tools"
+            elif any(keyword in display_name for keyword in ["vector", "database", "pgvector", "lancedb", "qdrant", "milvus", "pinecone"]):
+                category_name = "Vector Stores"
+            elif any(keyword in display_name for keyword in ["knowledge", "pdf", "website", "document"]):
+                category_name = "Knowledge"
+            elif any(keyword in display_name for keyword in ["embedding", "embedder"]):
+                category_name = "Embeddings"
+            elif any(keyword in display_name for keyword in ["memory", "storage"]):
+                category_name = "Memory"
+            elif any(keyword in display_name for keyword in ["rerank", "chunk"]):
+                category_name = "Processing"
+            elif any(keyword in display_name for keyword in ["reader"]):
+                category_name = "Data"
+            elif any(keyword in display_name for keyword in ["agent", "team", "workflow"]):
+                category_name = "Agents"
+        
+        print(f"Categorizing '{component.display_name}' as '{category_name}'")
+        
+        # Create category if it doesn't exist
+        if category_name not in categorized:
+            categorized[category_name] = {}
+            
+        # Add component to the appropriate category
+        categorized[category_name][component.display_name] = component_dict
+    
+    print(f"Final categories: {list(categorized.keys())}")
+    print(f"Total components per category: {[(cat, len(comps)) for cat, comps in categorized.items()]}")
+    
+    return categorized
+
+
+def _convert_component_metadata_to_all_format(component: ComponentMetadata) -> dict | None:
+    """Convert ComponentMetadata to the format used by /all endpoint."""
+    # Validate required fields
+    if not component.display_name or not component.description:
+        return None
+    
+    # Ensure inputs and outputs are not None
+    inputs = component.inputs or []
+    outputs = component.outputs or []
+    tags = component.tags or []
+    
+    return {
+        "template": {
+            "_type": "Component",
+            "display_name": component.display_name,
+            "description": component.description,
+            "documentation": "",
+            "icon": component.icon or "Component",
+            "framework": component.framework.value,
+            "base_classes": ["BaseComponent"],
+            "frozen": False,
+            "custom_fields": {},
+            "output_types": [],
+            "pinned": False,
+            "conditional_paths": [],
+            "outputs": [
+                {
+                    "name": out.name,
+                    "display_name": out.display_name,
+                    "type": out.type,
+                    "description": out.description,
+                } for out in outputs if out.name and out.display_name
+            ],
+            "field_order": [inp.name for inp in inputs if inp.name],
+            "beta": False,
+            "legacy": False,
+            "edited": False,
+            "metadata": {},
+            "tool_mode": False,
+            **{
+                inp.name: {
+                    "tool_mode": False,
+                    "trace_as_metadata": True,
+                    "load_from_db": False,
+                    "list": False,
+                    "list_add_label": "Add More",
+                    "required": inp.required if inp.required is not None else False,
+                    "placeholder": "",
+                    "show": True,
+                    "name": inp.name,
+                    "value": inp.default if inp.default is not None else "",
+                    "display_name": inp.display_name or inp.name,
+                    "advanced": False,
+                    "dynamic": False,
+                    "info": inp.description or "",
+                    "title_case": False,
+                    "type": inp.type or "str",
+                    "_input_type": f"{(inp.type or 'str').title()}Input"
+                } for inp in inputs if inp.name
+            }
+        },
+        "description": component.description,
+        "icon": component.icon or "Component",
+        "base_classes": ["Tool"] if component.category == "Tools" else ["BaseComponent"],
+        "display_name": component.display_name,
+        "documentation": "",
+        "minimized": False,
+        "custom_fields": {},
+        "output_types": [],
+        "pinned": False,
+        "conditional_paths": [],
+        "frozen": False,
+        "outputs": [
+            {
+                "name": out.name,
+                "display_name": out.display_name,
+                "type": out.type,
+                "description": out.description,
+            } for out in outputs if out.name and out.display_name
+        ],
+        "field_order": [inp.name for inp in inputs if inp.name],
+        "beta": False,
+        "legacy": False,
+        "edited": False,
+        "metadata": {},
+        "tool_mode": False,
+        "framework": component.framework.value,
+        "framework_component_id": component.id,
+        "lazy_loaded": False,
+        "template_code": "",
+        "field_config": {},
+        "tags": tags,
+        "version": component.version,
+        "created_at": component.created_at.isoformat() if component.created_at else None,
+        "updated_at": component.updated_at.isoformat() if component.updated_at else None,
+    }
 
 
 @router.get("/{framework}/status", response_model=FrameworkStatusResponse)

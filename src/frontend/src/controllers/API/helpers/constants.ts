@@ -25,6 +25,7 @@ export const URLs = {
   STARTER_PROJECTS: `starter-projects`,
   SIDEBAR_CATEGORIES: `sidebar_categories`,
   ALL: `all`,
+  FRAMEWORKS: `frameworks`,
   VOICE: `voice`,
   PUBLIC_FLOW: `flows/public_flow`,
   MCP: `mcp/project`,

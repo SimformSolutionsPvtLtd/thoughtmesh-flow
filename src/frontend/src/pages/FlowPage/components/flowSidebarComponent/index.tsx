@@ -137,10 +137,7 @@ export function FlowSidebarComponent({ isLoading }: FlowSidebarComponentProps) {
 
   const hasResults = useMemo(() => {
     return Object.entries(dataFilter).some(
-      ([category, items]) =>
-        Object.keys(items).length > 0 &&
-        (CATEGORIES.find((c) => c.name === category) ||
-          BUNDLES.find((b) => b.name === category)),
+      ([category, items]) => Object.keys(items || {}).length > 0
     );
   }, [dataFilter]);
 
