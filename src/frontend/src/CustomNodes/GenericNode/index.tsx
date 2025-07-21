@@ -276,7 +276,7 @@ function GenericNode({
             if (sourceHandle.name === output.name) {
               const newSourceHandle = {
                 ...sourceHandle,
-                output_types: [output.selected ?? output.types[0]],
+                output_types: [output.selected ?? (output.types && output.types.length > 0 ? output.types[0] : "")],
               };
               const newSourceHandleId = scapedJSONStringfy(newSourceHandle);
 

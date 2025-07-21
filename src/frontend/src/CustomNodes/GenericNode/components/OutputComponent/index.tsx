@@ -111,7 +111,7 @@ export default function OutputComponent({
                         {output.display_name ?? output.name}
                       </span>
                       <span className="ml-4 text-[13px] text-muted-foreground">
-                        {output.types.join(", ")}
+                        {(output.types && output.types.length > 0) ? output.types.join(", ") : ""}
                       </span>
                     </CommandItem>
                   ))}

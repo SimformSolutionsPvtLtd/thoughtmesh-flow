@@ -371,7 +371,7 @@ function NodeOutputField({
               types={type?.split("|") ?? []}
               selected={
                 data.node?.outputs![index].selected ??
-                data.node?.outputs![index].types[0] ??
+                (data.node?.outputs![index].types && data.node?.outputs![index].types.length > 0 ? data.node?.outputs![index].types[0] : "") ??
                 title
               }
               nodeId={data.id}

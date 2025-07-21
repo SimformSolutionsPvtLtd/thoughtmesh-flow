@@ -15,9 +15,10 @@ export function getNodeOutputColors(
   if (color) return [color];
 
   // Try to get the colors based on the output types
-  let colors: string[] = output.types
-    .map((type) => nodeColors[type])
-    .filter((color) => color);
+  let colors: string[] =
+    output.types && output.types.length > 0
+      ? output.types.map((type) => nodeColors[type]).filter((color) => color)
+      : [];
   if (colors.length > 0) return colors;
 
   // Try to get the color based on the type of the selected node
@@ -25,9 +26,12 @@ export function getNodeOutputColors(
   if (color) return [color];
 
   // Try to get the colors based on the types of output
-  colors = output.types
-    .map((type) => getColorByType(types[type]))
-    .filter((color) => color);
+  colors =
+    output.types && output.types.length > 0
+      ? output.types
+          .map((type) => getColorByType(types[type]))
+          .filter((color) => color)
+      : [];
   if (colors.length > 0) return colors;
 
   // Try to get the color based on the type in data

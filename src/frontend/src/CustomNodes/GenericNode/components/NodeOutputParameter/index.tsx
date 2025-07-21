@@ -20,7 +20,10 @@ export const OutputParameter = ({
 }) => {
   const id = useMemo(
     () => ({
-      output_types: [output.selected ?? output.types[0]],
+      output_types: [
+        output.selected ??
+          (output.types && output.types.length > 0 ? output.types[0] : ""),
+      ],
       id: data.id,
       dataType: data.type,
       name: output.name,
@@ -49,9 +52,9 @@ export const OutputParameter = ({
       colors={colors}
       outputProxy={output.proxy}
       title={output.display_name ?? output.name}
-      tooltipTitle={output.selected ?? output.types[0]}
+      tooltipTitle={output.selected ?? (output.types && output.types.length > 0 ? output.types[0] : "")}
       id={id}
-      type={output.types.join("|")}
+      type={(output.types && output.types.length > 0) ? output.types.join("|") : ""}
       showNode={showNode}
       outputName={output.name}
       outputs={outputs}

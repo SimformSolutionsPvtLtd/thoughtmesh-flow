@@ -137,6 +137,7 @@ export function ParameterRenderComponent({
           />
         );
       case "bool":
+      case "boolean":
         return (
           <ToggleShadComponent
             size="medium"
@@ -215,6 +216,7 @@ export function ParameterRenderComponent({
           />
         );
       case "slider":
+      case "number":
         return (
           <SliderComponent
             {...baseInputProps}
@@ -231,6 +233,7 @@ export function ParameterRenderComponent({
           />
         );
       case "sortableList":
+      case "list":
         return (
           <SortableListComponent
             {...baseInputProps}

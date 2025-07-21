@@ -129,6 +129,8 @@ export const nodeColors: { [char: string]: string } = {
   Agent: "#903BBE",
   AgentExecutor: "#903BBE",
   Tool: "#00fbfc",
+  VectorDb: "#AA8742",
+  vectordb: "#AA8742",
 };
 
 export const nodeColorsName: { [char: string]: string } = {
@@ -182,6 +184,8 @@ export const nodeColorsName: { [char: string]: string } = {
   BaseChatMessageHistory: "orange",
   Memory: "orange",
   DataFrame: "pink",
+  VectorDb: "yellow",
+  vectordb: "yellow",
 };
 
 export const FILE_ICONS = {
