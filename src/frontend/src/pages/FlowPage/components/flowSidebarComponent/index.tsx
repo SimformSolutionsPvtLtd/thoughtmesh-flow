@@ -50,6 +50,7 @@ interface FlowSidebarComponentProps {
 
 export function FlowSidebarComponent({ isLoading }: FlowSidebarComponentProps) {
   const data = useTypesStore((state) => state.data);
+console.log("data",data);
 
   const { getFilterEdge, setFilterEdge, filterType } = useFlowStore(
     useShallow((state) => ({

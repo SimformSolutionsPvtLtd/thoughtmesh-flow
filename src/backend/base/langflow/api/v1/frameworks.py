@@ -100,27 +100,27 @@ def _categorize_framework_components(components: list[ComponentMetadata]) -> dic
             continue
         
         # Determine category for proper organization
-        category_name = component.category or "Models"  # Default to Models for agno components
+        category_name = component.category or "models"  # Default to Models for agno components
         
         # For better categorization, let's use component names to determine categories
         if not component.category:
             display_name = component.display_name.lower()
             if any(keyword in display_name for keyword in ["tools", "search", "calculator", "file", "arxiv", "reasoning"]):
-                category_name = "Tools"
+                category_name = "tools"
             elif any(keyword in display_name for keyword in ["vector", "database", "pgvector", "lancedb", "qdrant", "milvus", "pinecone"]):
-                category_name = "Vector Stores"
+                category_name = "vectorstores"
             elif any(keyword in display_name for keyword in ["knowledge", "pdf", "website", "document"]):
-                category_name = "Knowledge"
+                category_name = "knowledge"
             elif any(keyword in display_name for keyword in ["embedding", "embedder"]):
-                category_name = "Embeddings"
+                category_name = "embeddings"
             elif any(keyword in display_name for keyword in ["memory", "storage"]):
-                category_name = "Memory"
+                category_name = "memory"
             elif any(keyword in display_name for keyword in ["rerank", "chunk"]):
-                category_name = "Processing"
+                category_name = "processing"
             elif any(keyword in display_name for keyword in ["reader"]):
-                category_name = "Data"
+                category_name = "data"
             elif any(keyword in display_name for keyword in ["agent", "team", "workflow"]):
-                category_name = "Agents"
+                category_name = "agents"
         
         print(f"Categorizing '{component.display_name}' as '{category_name}'")
         
@@ -131,6 +131,7 @@ def _categorize_framework_components(components: list[ComponentMetadata]) -> dic
         # Add component to the appropriate category
         categorized[category_name][component.display_name] = component_dict
     
+    print(f"Final categories: {categorized}")
     print(f"Final categories: {list(categorized.keys())}")
     print(f"Total components per category: {[(cat, len(comps)) for cat, comps in categorized.items()]}")
     

@@ -20,6 +20,7 @@ export const useGetFrameworkComponents: useQueryFunctionType<
         // For other frameworks, use the new framework-specific endpoint
         const response = await api.get(`${getURL("FRAMEWORKS")}/${framework}/components`);
         const data = response?.data;
+        console.log("Agno", data);
         
         // Handle agno format - check if data is already in the right format
         if (data && typeof data === 'object') {

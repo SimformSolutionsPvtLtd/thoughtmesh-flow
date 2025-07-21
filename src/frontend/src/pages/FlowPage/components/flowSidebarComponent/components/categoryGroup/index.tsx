@@ -19,6 +19,13 @@ export const CategoryGroup = memo(function CategoryGroup({
   onDragStart,
   sensitiveSort,
 }: CategoryGroupProps) {
+  console.log("===>","dataFilter",dataFilter,
+  "sortedCategories",sortedCategories,
+  "CATEGORIES",CATEGORIES,
+  "openCategories",openCategories,
+  "search",search,
+  "nodeColors",nodeColors,);
+  
   return (
     <SidebarGroup className="p-3">
       <SidebarGroupContent>
