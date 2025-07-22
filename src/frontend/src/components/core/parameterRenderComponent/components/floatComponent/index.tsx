@@ -24,7 +24,9 @@ export default function FloatComponent({
   const max = rangeSpec?.max;
 
   // Local state for input value
-  const [localValue, setLocalValue] = useState<string>(value.toString());
+  const [localValue, setLocalValue] = useState<string>(
+    value !== null && value !== undefined ? value.toString() : "0"
+  );
 
   // Clear component state
   useEffect(() => {
@@ -35,7 +37,7 @@ export default function FloatComponent({
 
   // Update local value when prop changes
   useEffect(() => {
-    setLocalValue(value.toString());
+    setLocalValue(value !== null && value !== undefined ? value.toString() : "0");
   }, [value]);
 
   const [cursor, setCursor] = useState<number | null>(null);

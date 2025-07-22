@@ -17,7 +17,8 @@ export default function HandleTooltipComponent({
   isSameNode: boolean;
   left: boolean;
 }) {
-  const tooltips = tooltipTitle.split("\n");
+  const tooltipString = typeof tooltipTitle === 'string' ? tooltipTitle : String(tooltipTitle || '');
+  const tooltips = tooltipString.split("\n");
   const plural = tooltips.length > 1 ? "s" : "";
 
   return (

@@ -1,14 +1,64 @@
 """
 Real Agno Components Implementation
 This module implements actual Agno framework components based on the agno-agi/agno repository structure.
+Component types are standardized to match Langflow's schema definitions.
 """
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from .types import ComponentCategory, ComponentMetadata, InputDefinition, OutputDefinition
+
+# Standard type mappings to ensure compatibility with Langflow schema
+# Based on schema.py InputType and OutputType definitions
+STANDARD_INPUT_TYPES = {
+    "string": "str",
+    "text": "str",
+    "number": "float",
+    "integer": "int",
+    "boolean": "bool",
+    "file": "file",
+    "chat": "chat",
+    "any": "any",
+    "Model": "LanguageModel",
+    "VectorDb": "VectorStore",
+    "Agent": "BaseAgent",
+    "Tool": "BaseTool",
+    "Message": "Message",
+    "Data": "Data",
+}
+
+STANDARD_OUTPUT_TYPES = {
+    "Model": "LanguageModel",
+    "Text": "Message",
+    "Data": "Data",
+    "Agent": "BaseAgent",
+    "Tool": "BaseTool",
+    "Toolkit": "BaseTool",
+    "VectorStore": "VectorStore",
+    "VectorDb": "VectorStore",
+    "Embeddings": "Embeddings",
+    "Memory": "BaseMemory",
+    "Retriever": "BaseRetriever",
+    "Document": "Document",
+    "chat": "chat",
+    "text": "text",
+    "any": "any",
+    "debug": "debug",
+    "list": "Data",
+}
+
+
+def standardize_input_type(original_type: str) -> str:
+    """Standardize input type to match Langflow schema."""
+    return STANDARD_INPUT_TYPES.get(original_type, original_type)
+
+
+def standardize_output_type(original_type: str) -> str:
+    """Standardize output type to match Langflow schema."""
+    return STANDARD_OUTPUT_TYPES.get(original_type, original_type)
 
 
 class AgnoComponentRegistry:
@@ -49,9 +99,31 @@ class AgnoComponentRegistry:
                 framework="agno",
                 inputs=[
                     InputDefinition(
+                        name="input_value",
+                        display_name="Input",
+                        type=standardize_input_type("Message"),
+                        required=False,
+                        description="The input message or prompt",
+                    ),
+                    InputDefinition(
+                        name="system_message",
+                        display_name="System Message",
+                        type=standardize_input_type("string"),
+                        required=False,
+                        description="System instructions for the model",
+                    ),
+                    InputDefinition(
+                        name="stream",
+                        display_name="Stream",
+                        type=standardize_input_type("boolean"),
+                        required=False,
+                        description="Whether to stream the response",
+                        default=False,
+                    ),
+                    InputDefinition(
                         name="model_id",
                         display_name="Model ID",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=True,
                         description="OpenAI model identifier",
                         default="gpt-4o",
@@ -60,14 +132,14 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="api_key",
                         display_name="API Key",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=False,
                         description="OpenAI API key (uses environment variable if not provided)",
                     ),
                     InputDefinition(
                         name="temperature",
                         display_name="Temperature",
-                        type="number",
+                        type=standardize_input_type("number"),
                         required=False,
                         description="Sampling temperature",
                         default=0.7,
@@ -77,20 +149,36 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="max_tokens",
                         display_name="Max Tokens",
-                        type="number",
+                        type=standardize_input_type("number"),
                         required=False,
                         description="Maximum tokens to generate",
                     ),
                 ],
                 outputs=[
                     OutputDefinition(
-                        name="model",
-                        display_name="Model Instance",
-                        type="Model",
+                        name="text_output",
+                        display_name="Model Response",
+                        type=standardize_output_type("Text"),
+                        description="The model's response message",
+                        types=["Message"],
+                        allows_loop=False,
+                        group_outputs=False,
+                        tool_mode=False,
+                        value=None,
+                    ),
+                    OutputDefinition(
+                        name="model_output",
+                        display_name="Language Model",
+                        type=standardize_output_type("Model"),
                         description="Configured OpenAI chat model",
-                    )
+                        types=["LanguageModel"],
+                        allows_loop=False,
+                        group_outputs=False,
+                        tool_mode=False,
+                        value=None,
+                    ),
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
             ComponentMetadata(
                 id="agno_anthropic_claude",
@@ -101,9 +189,31 @@ class AgnoComponentRegistry:
                 framework="agno",
                 inputs=[
                     InputDefinition(
+                        name="input_value",
+                        display_name="Input",
+                        type=standardize_input_type("Message"),
+                        required=False,
+                        description="The input message or prompt",
+                    ),
+                    InputDefinition(
+                        name="system_message",
+                        display_name="System Message",
+                        type=standardize_input_type("string"),
+                        required=False,
+                        description="System instructions for the model",
+                    ),
+                    InputDefinition(
+                        name="stream",
+                        display_name="Stream",
+                        type=standardize_input_type("boolean"),
+                        required=False,
+                        description="Whether to stream the response",
+                        default=False,
+                    ),
+                    InputDefinition(
                         name="model_id",
                         display_name="Model ID",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=True,
                         description="Claude model identifier",
                         default="claude-3-5-sonnet-20241022",
@@ -112,14 +222,14 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="api_key",
                         display_name="API Key",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=False,
                         description="Anthropic API key",
                     ),
                     InputDefinition(
                         name="temperature",
                         display_name="Temperature",
-                        type="number",
+                        type=standardize_input_type("number"),
                         required=False,
                         description="Sampling temperature",
                         default=0.7,
@@ -129,10 +239,29 @@ class AgnoComponentRegistry:
                 ],
                 outputs=[
                     OutputDefinition(
-                        name="model", display_name="Model Instance", type="Model", description="Configured Claude model"
-                    )
+                        name="text_output",
+                        display_name="Model Response",
+                        type=standardize_output_type("Text"),
+                        description="The model's response message",
+                        types=["Message"],
+                        allows_loop=False,
+                        group_outputs=False,
+                        tool_mode=False,
+                        value=None,
+                    ),
+                    OutputDefinition(
+                        name="model_output",
+                        display_name="Language Model",
+                        type=standardize_output_type("Model"),
+                        description="Configured Claude model",
+                        types=["LanguageModel"],
+                        allows_loop=False,
+                        group_outputs=False,
+                        tool_mode=False,
+                        value=None,
+                    ),
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
             ComponentMetadata(
                 id="agno_groq_llama",
@@ -143,9 +272,31 @@ class AgnoComponentRegistry:
                 framework="agno",
                 inputs=[
                     InputDefinition(
+                        name="input_value",
+                        display_name="Input",
+                        type=standardize_input_type("Message"),
+                        required=False,
+                        description="The input message or prompt",
+                    ),
+                    InputDefinition(
+                        name="system_message",
+                        display_name="System Message",
+                        type=standardize_input_type("string"),
+                        required=False,
+                        description="System instructions for the model",
+                    ),
+                    InputDefinition(
+                        name="stream",
+                        display_name="Stream",
+                        type=standardize_input_type("boolean"),
+                        required=False,
+                        description="Whether to stream the response",
+                        default=False,
+                    ),
+                    InputDefinition(
                         name="model_id",
                         display_name="Model ID",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=True,
                         description="Groq model identifier",
                         default="llama-3.3-70b-versatile",
@@ -154,17 +305,36 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="api_key",
                         display_name="API Key",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=False,
                         description="Groq API key",
                     ),
                 ],
                 outputs=[
                     OutputDefinition(
-                        name="model", display_name="Model Instance", type="Model", description="Configured Groq model"
-                    )
+                        name="text_output",
+                        display_name="Model Response",
+                        type=standardize_output_type("Text"),
+                        description="The model's response message",
+                        types=["Message"],
+                        allows_loop=False,
+                        group_outputs=False,
+                        tool_mode=False,
+                        value=None,
+                    ),
+                    OutputDefinition(
+                        name="model_output",
+                        display_name="Language Model",
+                        type=standardize_output_type("Model"),
+                        description="Configured Groq model",
+                        types=["LanguageModel"],
+                        allows_loop=False,
+                        group_outputs=False,
+                        tool_mode=False,
+                        value=None,
+                    ),
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
             ComponentMetadata(
                 id="agno_ollama",
@@ -175,9 +345,31 @@ class AgnoComponentRegistry:
                 framework="agno",
                 inputs=[
                     InputDefinition(
+                        name="input_value",
+                        display_name="Input",
+                        type=standardize_input_type("Message"),
+                        required=False,
+                        description="The input message or prompt",
+                    ),
+                    InputDefinition(
+                        name="system_message",
+                        display_name="System Message",
+                        type=standardize_input_type("string"),
+                        required=False,
+                        description="System instructions for the model",
+                    ),
+                    InputDefinition(
+                        name="stream",
+                        display_name="Stream",
+                        type=standardize_input_type("boolean"),
+                        required=False,
+                        description="Whether to stream the response",
+                        default=False,
+                    ),
+                    InputDefinition(
                         name="model_id",
                         display_name="Model ID",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=True,
                         description="Ollama model identifier",
                         default="llama3.1:8b",
@@ -186,7 +378,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="base_url",
                         display_name="Base URL",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=False,
                         description="Ollama server URL",
                         default="http://localhost:11434",
@@ -194,10 +386,29 @@ class AgnoComponentRegistry:
                 ],
                 outputs=[
                     OutputDefinition(
-                        name="model", display_name="Model Instance", type="Model", description="Configured Ollama model"
-                    )
+                        name="text_output",
+                        display_name="Model Response",
+                        type=standardize_output_type("Text"),
+                        description="The model's response message",
+                        types=["Message"],
+                        allows_loop=False,
+                        group_outputs=False,
+                        tool_mode=False,
+                        value=None,
+                    ),
+                    OutputDefinition(
+                        name="model_output",
+                        display_name="Language Model",
+                        type=standardize_output_type("Model"),
+                        description="Configured Ollama model",
+                        types=["LanguageModel"],
+                        allows_loop=False,
+                        group_outputs=False,
+                        tool_mode=False,
+                        value=None,
+                    ),
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
             ComponentMetadata(
                 id="agno_google_gemini",
@@ -208,9 +419,31 @@ class AgnoComponentRegistry:
                 framework="agno",
                 inputs=[
                     InputDefinition(
+                        name="input_value",
+                        display_name="Input",
+                        type=standardize_input_type("Message"),
+                        required=False,
+                        description="The input message or prompt",
+                    ),
+                    InputDefinition(
+                        name="system_message",
+                        display_name="System Message",
+                        type=standardize_input_type("string"),
+                        required=False,
+                        description="System instructions for the model",
+                    ),
+                    InputDefinition(
+                        name="stream",
+                        display_name="Stream",
+                        type=standardize_input_type("boolean"),
+                        required=False,
+                        description="Whether to stream the response",
+                        default=False,
+                    ),
+                    InputDefinition(
                         name="model_id",
                         display_name="Model ID",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=True,
                         description="Gemini model identifier",
                         default="gemini-2.0-flash-exp",
@@ -219,17 +452,36 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="api_key",
                         display_name="API Key",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=False,
                         description="Google AI API key",
                     ),
                 ],
                 outputs=[
                     OutputDefinition(
-                        name="model", display_name="Model Instance", type="Model", description="Configured Gemini model"
-                    )
+                        name="text_output",
+                        display_name="Model Response",
+                        type=standardize_output_type("Text"),
+                        description="The model's response message",
+                        types=["Message"],
+                        allows_loop=False,
+                        group_outputs=False,
+                        tool_mode=False,
+                        value=None,
+                    ),
+                    OutputDefinition(
+                        name="model_output",
+                        display_name="Language Model",
+                        type=standardize_output_type("Model"),
+                        description="Configured Gemini model",
+                        types=["LanguageModel"],
+                        allows_loop=False,
+                        group_outputs=False,
+                        tool_mode=False,
+                        value=None,
+                    ),
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
         ]
 
@@ -248,7 +500,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="num_results",
                         display_name="Number of Results",
-                        type="number",
+                        type=standardize_input_type("number"),
                         required=False,
                         description="Number of search results to return",
                         default=5,
@@ -258,7 +510,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="cache_results",
                         display_name="Cache Results",
-                        type="boolean",
+                        type=standardize_input_type("boolean"),
                         required=False,
                         description="Cache search results for faster repeated queries",
                         default=True,
@@ -268,11 +520,11 @@ class AgnoComponentRegistry:
                     OutputDefinition(
                         name="tools",
                         display_name="Tool Instance",
-                        type="Toolkit",
+                        type=standardize_output_type("Tool"),
                         description="DuckDuckGo search toolkit",
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
             ComponentMetadata(
                 id="agno_yfinance_tools",
@@ -285,7 +537,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="stock_price",
                         display_name="Enable Stock Price",
-                        type="boolean",
+                        type=standardize_input_type("boolean"),
                         required=False,
                         description="Enable stock price retrieval",
                         default=True,
@@ -293,7 +545,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="company_info",
                         display_name="Enable Company Info",
-                        type="boolean",
+                        type=standardize_input_type("boolean"),
                         required=False,
                         description="Enable company information retrieval",
                         default=True,
@@ -301,7 +553,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="analyst_recommendations",
                         display_name="Enable Analyst Recommendations",
-                        type="boolean",
+                        type=standardize_input_type("boolean"),
                         required=False,
                         description="Enable analyst recommendations",
                         default=True,
@@ -309,10 +561,13 @@ class AgnoComponentRegistry:
                 ],
                 outputs=[
                     OutputDefinition(
-                        name="tools", display_name="Tool Instance", type="Toolkit", description="Yahoo Finance toolkit"
+                        name="tools",
+                        display_name="Tool Instance",
+                        type=standardize_output_type("Tool"),
+                        description="Yahoo Finance toolkit",
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
             ComponentMetadata(
                 id="agno_arxiv_tools",
@@ -325,7 +580,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="download_dir",
                         display_name="Download Directory",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=False,
                         description="Directory to download papers",
                         default="./arxiv_papers",
@@ -333,7 +588,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="max_results",
                         display_name="Max Results",
-                        type="number",
+                        type=standardize_input_type("number"),
                         required=False,
                         description="Maximum number of papers to return",
                         default=10,
@@ -343,10 +598,13 @@ class AgnoComponentRegistry:
                 ],
                 outputs=[
                     OutputDefinition(
-                        name="tools", display_name="Tool Instance", type="Toolkit", description="ArXiv research toolkit"
+                        name="tools",
+                        display_name="Tool Instance",
+                        type=standardize_output_type("Tool"),
+                        description="ArXiv research toolkit",
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
             ComponentMetadata(
                 id="agno_file_tools",
@@ -359,7 +617,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="base_dir",
                         display_name="Base Directory",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=False,
                         description="Base directory for file operations",
                         default="./workspace",
@@ -367,7 +625,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="read_files",
                         display_name="Enable Read Files",
-                        type="boolean",
+                        type=standardize_input_type("boolean"),
                         required=False,
                         description="Allow reading files",
                         default=True,
@@ -375,7 +633,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="save_files",
                         display_name="Enable Save Files",
-                        type="boolean",
+                        type=standardize_input_type("boolean"),
                         required=False,
                         description="Allow saving files",
                         default=True,
@@ -385,11 +643,11 @@ class AgnoComponentRegistry:
                     OutputDefinition(
                         name="tools",
                         display_name="Tool Instance",
-                        type="Toolkit",
+                        type=standardize_output_type("Tool"),
                         description="File management toolkit",
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
             ComponentMetadata(
                 id="agno_calculator_tools",
@@ -402,7 +660,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="enable_all",
                         display_name="Enable All Functions",
-                        type="boolean",
+                        type=standardize_input_type("boolean"),
                         required=False,
                         description="Enable all calculator functions",
                         default=True,
@@ -410,10 +668,13 @@ class AgnoComponentRegistry:
                 ],
                 outputs=[
                     OutputDefinition(
-                        name="tools", display_name="Tool Instance", type="Toolkit", description="Calculator toolkit"
+                        name="tools",
+                        display_name="Tool Instance",
+                        type=standardize_output_type("Tool"),
+                        description="Calculator toolkit",
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
             ComponentMetadata(
                 id="agno_reasoning_tools",
@@ -426,7 +687,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="add_instructions",
                         display_name="Add Instructions",
-                        type="boolean",
+                        type=standardize_input_type("boolean"),
                         required=False,
                         description="Add reasoning instructions to agent",
                         default=True,
@@ -434,7 +695,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="add_few_shot",
                         display_name="Add Few-Shot Examples",
-                        type="boolean",
+                        type=standardize_input_type("boolean"),
                         required=False,
                         description="Add few-shot reasoning examples",
                         default=True,
@@ -442,10 +703,13 @@ class AgnoComponentRegistry:
                 ],
                 outputs=[
                     OutputDefinition(
-                        name="tools", display_name="Tool Instance", type="Toolkit", description="Reasoning toolkit"
+                        name="tools",
+                        display_name="Tool Instance",
+                        type=standardize_output_type("Tool"),
+                        description="Reasoning toolkit",
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
         ]
 
@@ -464,7 +728,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="db_url",
                         display_name="Database URL",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=True,
                         description="PostgreSQL connection string",
                         default="postgresql+psycopg://ai:ai@localhost:5532/ai",
@@ -472,7 +736,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="table_name",
                         display_name="Table Name",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=True,
                         description="Table name for storing vectors",
                         default="vector_store",
@@ -480,7 +744,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="distance",
                         display_name="Distance Metric",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=False,
                         description="Distance metric for similarity search",
                         default="cosine",
@@ -491,11 +755,11 @@ class AgnoComponentRegistry:
                     OutputDefinition(
                         name="vector_db",
                         display_name="Vector Database",
-                        type="VectorDb",
+                        type=standardize_output_type("VectorDb"),
                         description="Configured PgVector database",
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
             ComponentMetadata(
                 id="agno_lancedb",
@@ -508,7 +772,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="uri",
                         display_name="Database URI",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=False,
                         description="LanceDB URI or path",
                         default="/tmp/lancedb",
@@ -516,7 +780,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="table_name",
                         display_name="Table Name",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=True,
                         description="Table name for storing vectors",
                         default="vectors",
@@ -524,7 +788,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="search_type",
                         display_name="Search Type",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=False,
                         description="Type of search to perform",
                         default="vector",
@@ -535,11 +799,11 @@ class AgnoComponentRegistry:
                     OutputDefinition(
                         name="vector_db",
                         display_name="Vector Database",
-                        type="VectorDb",
+                        type=standardize_output_type("VectorDb"),
                         description="Configured LanceDB database",
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
             ComponentMetadata(
                 id="agno_qdrant",
@@ -552,7 +816,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="url",
                         display_name="Qdrant URL",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=False,
                         description="Qdrant server URL",
                         default="http://localhost:6333",
@@ -560,7 +824,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="collection",
                         display_name="Collection Name",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=True,
                         description="Collection name for storing vectors",
                         default="documents",
@@ -568,7 +832,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="api_key",
                         display_name="API Key",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=False,
                         description="Qdrant API key for authentication",
                     ),
@@ -577,11 +841,11 @@ class AgnoComponentRegistry:
                     OutputDefinition(
                         name="vector_db",
                         display_name="Vector Database",
-                        type="VectorDb",
+                        type=standardize_output_type("VectorDb"),
                         description="Configured Qdrant database",
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
             ComponentMetadata(
                 id="agno_milvus",
@@ -594,7 +858,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="uri",
                         display_name="Milvus URI",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=False,
                         description="Milvus connection URI",
                         default="tmp/milvus.db",
@@ -602,7 +866,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="collection",
                         display_name="Collection Name",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=True,
                         description="Collection name for storing vectors",
                         default="documents",
@@ -610,7 +874,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="search_type",
                         display_name="Search Type",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=False,
                         description="Search type for retrieval",
                         default="vector",
@@ -621,11 +885,11 @@ class AgnoComponentRegistry:
                     OutputDefinition(
                         name="vector_db",
                         display_name="Vector Database",
-                        type="VectorDb",
+                        type=standardize_output_type("VectorDb"),
                         description="Configured Milvus database",
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
             ComponentMetadata(
                 id="agno_pinecone",
@@ -638,14 +902,14 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="api_key",
                         display_name="API Key",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=True,
                         description="Pinecone API key",
                     ),
                     InputDefinition(
                         name="index_name",
                         display_name="Index Name",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=True,
                         description="Pinecone index name",
                         default="documents",
@@ -653,7 +917,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="environment",
                         display_name="Environment",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=True,
                         description="Pinecone environment",
                     ),
@@ -662,11 +926,11 @@ class AgnoComponentRegistry:
                     OutputDefinition(
                         name="vector_db",
                         display_name="Vector Database",
-                        type="VectorDb",
+                        type=standardize_output_type("VectorDb"),
                         description="Configured Pinecone database",
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
         ]
 
@@ -685,21 +949,21 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="urls",
                         display_name="PDF URLs",
-                        type="list",
+                        type=standardize_output_type("Data"),
                         required=True,
                         description="List of PDF URLs to load",
                     ),
                     InputDefinition(
                         name="vector_db",
                         display_name="Vector Database",
-                        type="VectorDb",
+                        type=standardize_output_type("VectorDb"),
                         required=True,
                         description="Vector database for storing embeddings",
                     ),
                     InputDefinition(
                         name="num_documents",
                         display_name="Number of Documents",
-                        type="number",
+                        type=standardize_input_type("number"),
                         required=False,
                         description="Number of relevant documents to retrieve",
                         default=5,
@@ -715,7 +979,7 @@ class AgnoComponentRegistry:
                         description="Configured PDF knowledge base",
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
             ComponentMetadata(
                 id="agno_website_knowledge",
@@ -728,14 +992,14 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="urls",
                         display_name="Website URLs",
-                        type="list",
+                        type=standardize_output_type("Data"),
                         required=True,
                         description="List of website URLs to crawl",
                     ),
                     InputDefinition(
                         name="max_links",
                         display_name="Max Links",
-                        type="number",
+                        type=standardize_input_type("number"),
                         required=False,
                         description="Maximum number of links to crawl",
                         default=10,
@@ -745,7 +1009,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="vector_db",
                         display_name="Vector Database",
-                        type="VectorDb",
+                        type=standardize_output_type("VectorDb"),
                         required=True,
                         description="Vector database for storing embeddings",
                     ),
@@ -758,7 +1022,7 @@ class AgnoComponentRegistry:
                         description="Configured website knowledge base",
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
             ComponentMetadata(
                 id="agno_document_knowledge",
@@ -771,14 +1035,14 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="documents",
                         display_name="Documents",
-                        type="list",
+                        type=standardize_output_type("Data"),
                         required=True,
                         description="List of documents with metadata",
                     ),
                     InputDefinition(
                         name="vector_db",
                         display_name="Vector Database",
-                        type="VectorDb",
+                        type=standardize_output_type("VectorDb"),
                         required=True,
                         description="Vector database for storing embeddings",
                     ),
@@ -791,7 +1055,7 @@ class AgnoComponentRegistry:
                         description="Configured document knowledge base",
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
             ComponentMetadata(
                 id="agno_combined_knowledge",
@@ -804,14 +1068,14 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="sources",
                         display_name="Knowledge Sources",
-                        type="list",
+                        type=standardize_output_type("Data"),
                         required=True,
                         description="List of knowledge base sources to combine",
                     ),
                     InputDefinition(
                         name="vector_db",
                         display_name="Vector Database",
-                        type="VectorDb",
+                        type=standardize_output_type("VectorDb"),
                         required=True,
                         description="Vector database for combined storage",
                     ),
@@ -824,7 +1088,7 @@ class AgnoComponentRegistry:
                         description="Combined knowledge base",
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
         ]
 
@@ -843,7 +1107,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="model_id",
                         display_name="Model ID",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=False,
                         description="OpenAI embedding model",
                         default="text-embedding-3-small",
@@ -852,14 +1116,14 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="api_key",
                         display_name="API Key",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=False,
                         description="OpenAI API key",
                     ),
                     InputDefinition(
                         name="dimensions",
                         display_name="Dimensions",
-                        type="number",
+                        type=standardize_input_type("number"),
                         required=False,
                         description="Embedding dimensions",
                     ),
@@ -872,7 +1136,7 @@ class AgnoComponentRegistry:
                         description="Configured OpenAI embedder",
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
             ComponentMetadata(
                 id="agno_cohere_embedder",
@@ -885,7 +1149,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="model_id",
                         display_name="Model ID",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=False,
                         description="Cohere embedding model",
                         default="embed-v4.0",
@@ -894,7 +1158,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="api_key",
                         display_name="API Key",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=False,
                         description="Cohere API key",
                     ),
@@ -907,7 +1171,7 @@ class AgnoComponentRegistry:
                         description="Configured Cohere embedder",
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
             ComponentMetadata(
                 id="agno_huggingface_embedder",
@@ -920,7 +1184,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="model_name",
                         display_name="Model Name",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=False,
                         description="HuggingFace model name",
                         default="sentence-transformers/all-MiniLM-L6-v2",
@@ -928,7 +1192,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="api_key",
                         display_name="API Key",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=False,
                         description="HuggingFace API key",
                     ),
@@ -941,7 +1205,7 @@ class AgnoComponentRegistry:
                         description="Configured HuggingFace embedder",
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
             ComponentMetadata(
                 id="agno_ollama_embedder",
@@ -954,7 +1218,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="model_id",
                         display_name="Model ID",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=False,
                         description="Ollama embedding model",
                         default="nomic-embed-text",
@@ -963,7 +1227,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="base_url",
                         display_name="Base URL",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=False,
                         description="Ollama server URL",
                         default="http://localhost:11434",
@@ -971,7 +1235,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="dimensions",
                         display_name="Dimensions",
-                        type="number",
+                        type=standardize_input_type("number"),
                         required=False,
                         description="Embedding dimensions",
                         default=768,
@@ -985,7 +1249,7 @@ class AgnoComponentRegistry:
                         description="Configured Ollama embedder",
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
         ]
 
@@ -1004,14 +1268,14 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="db_url",
                         display_name="Database URL",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=True,
                         description="Database connection for memory storage",
                     ),
                     InputDefinition(
                         name="table_name",
                         display_name="Table Name",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=False,
                         description="Table name for memory storage",
                         default="agent_memory",
@@ -1025,7 +1289,7 @@ class AgnoComponentRegistry:
                         description="Configured agent memory",
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
             ComponentMetadata(
                 id="agno_user_memory",
@@ -1038,14 +1302,14 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="db_url",
                         display_name="Database URL",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=True,
                         description="Database connection for user memory",
                     ),
                     InputDefinition(
                         name="user_id",
                         display_name="User ID",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=True,
                         description="Unique identifier for the user",
                     ),
@@ -1058,7 +1322,7 @@ class AgnoComponentRegistry:
                         description="Configured user memory",
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
             ComponentMetadata(
                 id="agno_team_memory",
@@ -1071,14 +1335,14 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="db_url",
                         display_name="Database URL",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=True,
                         description="Database connection for team memory",
                     ),
                     InputDefinition(
                         name="team_id",
                         display_name="Team ID",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=True,
                         description="Unique identifier for the team",
                     ),
@@ -1091,7 +1355,7 @@ class AgnoComponentRegistry:
                         description="Configured team memory",
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
         ]
 
@@ -1110,7 +1374,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="db_file",
                         display_name="Database File",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=False,
                         description="SQLite database file path",
                         default="agent_storage.db",
@@ -1118,7 +1382,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="table_name",
                         display_name="Table Name",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=False,
                         description="Table name for session storage",
                         default="agent_sessions",
@@ -1132,7 +1396,7 @@ class AgnoComponentRegistry:
                         description="Configured SQLite storage",
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
             ComponentMetadata(
                 id="agno_postgres_storage",
@@ -1145,14 +1409,14 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="db_url",
                         display_name="Database URL",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=True,
                         description="PostgreSQL connection string",
                     ),
                     InputDefinition(
                         name="table_name",
                         display_name="Table Name",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=False,
                         description="Table name for session storage",
                         default="agent_sessions",
@@ -1166,7 +1430,7 @@ class AgnoComponentRegistry:
                         description="Configured PostgreSQL storage",
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
         ]
 
@@ -1185,7 +1449,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="model",
                         display_name="Model",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=False,
                         description="Cohere reranking model",
                         default="rerank-multilingual-v3.0",
@@ -1194,14 +1458,14 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="api_key",
                         display_name="API Key",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=False,
                         description="Cohere API key",
                     ),
                     InputDefinition(
                         name="top_n",
                         display_name="Top N",
-                        type="number",
+                        type=standardize_input_type("number"),
                         required=False,
                         description="Number of top results to return",
                         default=5,
@@ -1217,7 +1481,7 @@ class AgnoComponentRegistry:
                         description="Configured Cohere reranker",
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
             ComponentMetadata(
                 id="agno_sentence_transformer_reranker",
@@ -1230,7 +1494,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="model",
                         display_name="Model",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=False,
                         description="Sentence transformer reranking model",
                         default="BAAI/bge-reranker-v2-m3",
@@ -1239,7 +1503,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="top_n",
                         display_name="Top N",
-                        type="number",
+                        type=standardize_input_type("number"),
                         required=False,
                         description="Number of top results to return",
                         default=5,
@@ -1255,7 +1519,7 @@ class AgnoComponentRegistry:
                         description="Configured sentence transformer reranker",
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
         ]
 
@@ -1274,7 +1538,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="chunk_size",
                         display_name="Chunk Size",
-                        type="number",
+                        type=standardize_input_type("number"),
                         required=False,
                         description="Size of each text chunk",
                         default=1000,
@@ -1284,7 +1548,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="overlap",
                         display_name="Overlap",
-                        type="number",
+                        type=standardize_input_type("number"),
                         required=False,
                         description="Overlap between chunks",
                         default=200,
@@ -1300,7 +1564,7 @@ class AgnoComponentRegistry:
                         description="Fixed size chunking strategy",
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
             ComponentMetadata(
                 id="agno_recursive_chunking",
@@ -1313,7 +1577,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="chunk_size",
                         display_name="Chunk Size",
-                        type="number",
+                        type=standardize_input_type("number"),
                         required=False,
                         description="Target size of each chunk",
                         default=1000,
@@ -1323,7 +1587,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="overlap",
                         display_name="Overlap",
-                        type="number",
+                        type=standardize_input_type("number"),
                         required=False,
                         description="Overlap between chunks",
                         default=200,
@@ -1333,7 +1597,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="separators",
                         display_name="Separators",
-                        type="list",
+                        type=standardize_output_type("Data"),
                         required=False,
                         description="List of separators to use for splitting",
                     ),
@@ -1346,7 +1610,7 @@ class AgnoComponentRegistry:
                         description="Recursive chunking strategy",
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
             ComponentMetadata(
                 id="agno_semantic_chunking",
@@ -1359,7 +1623,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="similarity_threshold",
                         display_name="Similarity Threshold",
-                        type="number",
+                        type=standardize_input_type("number"),
                         required=False,
                         description="Threshold for semantic similarity",
                         default=0.5,
@@ -1369,7 +1633,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="max_chunk_size",
                         display_name="Max Chunk Size",
-                        type="number",
+                        type=standardize_input_type("number"),
                         required=False,
                         description="Maximum size of chunks",
                         default=1000,
@@ -1385,7 +1649,7 @@ class AgnoComponentRegistry:
                         description="Semantic chunking strategy",
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
             ComponentMetadata(
                 id="agno_agentic_chunking",
@@ -1398,14 +1662,14 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="model",
                         display_name="AI Model",
-                        type="Model",
+                        type=standardize_output_type("Model"),
                         required=False,
                         description="AI model for intelligent chunking",
                     ),
                     InputDefinition(
                         name="max_chunk_size",
                         display_name="Max Chunk Size",
-                        type="number",
+                        type=standardize_input_type("number"),
                         required=False,
                         description="Maximum size of chunks",
                         default=1000,
@@ -1421,7 +1685,7 @@ class AgnoComponentRegistry:
                         description="Agentic chunking strategy",
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
         ]
 
@@ -1440,7 +1704,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="extract_images",
                         display_name="Extract Images",
-                        type="boolean",
+                        type=standardize_input_type("boolean"),
                         required=False,
                         description="Extract images from PDF",
                         default=False,
@@ -1448,7 +1712,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="extract_tables",
                         display_name="Extract Tables",
-                        type="boolean",
+                        type=standardize_input_type("boolean"),
                         required=False,
                         description="Extract tables from PDF",
                         default=True,
@@ -1462,7 +1726,7 @@ class AgnoComponentRegistry:
                         description="Configured PDF reader",
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
             ComponentMetadata(
                 id="agno_docx_reader",
@@ -1475,7 +1739,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="extract_tables",
                         display_name="Extract Tables",
-                        type="boolean",
+                        type=standardize_input_type("boolean"),
                         required=False,
                         description="Extract tables from DOCX",
                         default=True,
@@ -1483,7 +1747,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="preserve_formatting",
                         display_name="Preserve Formatting",
-                        type="boolean",
+                        type=standardize_input_type("boolean"),
                         required=False,
                         description="Preserve text formatting",
                         default=False,
@@ -1497,7 +1761,7 @@ class AgnoComponentRegistry:
                         description="Configured DOCX reader",
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
             ComponentMetadata(
                 id="agno_url_reader",
@@ -1510,7 +1774,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="timeout",
                         display_name="Timeout",
-                        type="number",
+                        type=standardize_input_type("number"),
                         required=False,
                         description="Request timeout in seconds",
                         default=30,
@@ -1520,7 +1784,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="follow_redirects",
                         display_name="Follow Redirects",
-                        type="boolean",
+                        type=standardize_input_type("boolean"),
                         required=False,
                         description="Follow HTTP redirects",
                         default=True,
@@ -1534,7 +1798,7 @@ class AgnoComponentRegistry:
                         description="Configured URL reader",
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
         ]
 
@@ -1553,28 +1817,28 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="model",
                         display_name="AI Model",
-                        type="Model",
+                        type=standardize_output_type("Model"),
                         required=True,
                         description="AI model for the agent",
                     ),
                     InputDefinition(
                         name="tools",
                         display_name="Tools",
-                        type="list",
+                        type=standardize_output_type("Data"),
                         required=False,
                         description="List of tools for the agent",
                     ),
                     InputDefinition(
                         name="instructions",
                         display_name="Instructions",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=False,
                         description="Instructions for the agent behavior",
                     ),
                     InputDefinition(
                         name="description",
                         display_name="Description",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=False,
                         description="Description of the agent's role",
                     ),
@@ -1584,7 +1848,7 @@ class AgnoComponentRegistry:
                         name="agent", display_name="Agent", type="Agent", description="Configured AI agent"
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
             ComponentMetadata(
                 id="agno_knowledge_agent",
@@ -1597,7 +1861,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="model",
                         display_name="AI Model",
-                        type="Model",
+                        type=standardize_output_type("Model"),
                         required=True,
                         description="AI model for the agent",
                     ),
@@ -1611,7 +1875,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="search_knowledge",
                         display_name="Enable Knowledge Search",
-                        type="boolean",
+                        type=standardize_input_type("boolean"),
                         required=False,
                         description="Enable knowledge base search",
                         default=True,
@@ -1619,7 +1883,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="tools",
                         display_name="Tools",
-                        type="list",
+                        type=standardize_output_type("Data"),
                         required=False,
                         description="Additional tools for the agent",
                     ),
@@ -1629,7 +1893,7 @@ class AgnoComponentRegistry:
                         name="agent", display_name="Agent", type="Agent", description="Knowledge-enhanced agent"
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
             ComponentMetadata(
                 id="agno_reasoning_agent",
@@ -1642,21 +1906,21 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="model",
                         display_name="AI Model",
-                        type="Model",
+                        type=standardize_output_type("Model"),
                         required=True,
                         description="AI model for reasoning",
                     ),
                     InputDefinition(
                         name="reasoning_tools",
                         display_name="Reasoning Tools",
-                        type="Toolkit",
+                        type=standardize_output_type("Tool"),
                         required=True,
                         description="Reasoning toolkit for the agent",
                     ),
                     InputDefinition(
                         name="show_reasoning",
                         display_name="Show Reasoning",
-                        type="boolean",
+                        type=standardize_input_type("boolean"),
                         required=False,
                         description="Show reasoning steps to user",
                         default=True,
@@ -1667,7 +1931,7 @@ class AgnoComponentRegistry:
                         name="agent", display_name="Agent", type="Agent", description="Reasoning-capable agent"
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
         ]
 
@@ -1686,21 +1950,21 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="agents",
                         display_name="Team Members",
-                        type="list",
+                        type=standardize_output_type("Data"),
                         required=True,
                         description="List of agents in the team",
                     ),
                     InputDefinition(
                         name="model",
                         display_name="Coordinator Model",
-                        type="Model",
+                        type=standardize_output_type("Model"),
                         required=True,
                         description="Model for team coordination",
                     ),
                     InputDefinition(
                         name="mode",
                         display_name="Team Mode",
-                        type="string",
+                        type=standardize_input_type("string"),
                         required=False,
                         description="Team coordination mode",
                         default="coordinate",
@@ -1709,7 +1973,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="instructions",
                         display_name="Team Instructions",
-                        type="list",
+                        type=standardize_output_type("Data"),
                         required=False,
                         description="Instructions for team coordination",
                     ),
@@ -1719,7 +1983,7 @@ class AgnoComponentRegistry:
                         name="team", display_name="Agent Team", type="Team", description="Configured agent team"
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
             ComponentMetadata(
                 id="agno_research_team",
@@ -1753,7 +2017,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="coordinator_model",
                         display_name="Coordinator Model",
-                        type="Model",
+                        type=standardize_output_type("Model"),
                         required=True,
                         description="Model for coordinating the research team",
                     ),
@@ -1763,7 +2027,7 @@ class AgnoComponentRegistry:
                         name="team", display_name="Research Team", type="Team", description="Research agent team"
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
         ]
 
@@ -1782,14 +2046,14 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="agents",
                         display_name="Workflow Agents",
-                        type="list",
+                        type=standardize_output_type("Data"),
                         required=True,
                         description="Ordered list of agents for sequential execution",
                     ),
                     InputDefinition(
                         name="pass_results",
                         display_name="Pass Results Between Agents",
-                        type="boolean",
+                        type=standardize_input_type("boolean"),
                         required=False,
                         description="Pass results from one agent to the next",
                         default=True,
@@ -1797,7 +2061,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="stop_on_failure",
                         display_name="Stop on Failure",
-                        type="boolean",
+                        type=standardize_input_type("boolean"),
                         required=False,
                         description="Stop workflow if an agent fails",
                         default=True,
@@ -1811,7 +2075,7 @@ class AgnoComponentRegistry:
                         description="Sequential agent workflow",
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
             ComponentMetadata(
                 id="agno_parallel_workflow",
@@ -1824,14 +2088,14 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="agents",
                         display_name="Workflow Agents",
-                        type="list",
+                        type=standardize_output_type("Data"),
                         required=True,
                         description="List of agents for parallel execution",
                     ),
                     InputDefinition(
                         name="combine_results",
                         display_name="Combine Results",
-                        type="boolean",
+                        type=standardize_input_type("boolean"),
                         required=False,
                         description="Combine results from all agents",
                         default=True,
@@ -1839,7 +2103,7 @@ class AgnoComponentRegistry:
                     InputDefinition(
                         name="wait_for_all",
                         display_name="Wait for All",
-                        type="boolean",
+                        type=standardize_input_type("boolean"),
                         required=False,
                         description="Wait for all agents to complete",
                         default=True,
@@ -1850,6 +2114,6 @@ class AgnoComponentRegistry:
                         name="workflow", display_name="Workflow", type="Workflow", description="Parallel agent workflow"
                     )
                 ],
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             ),
         ]

@@ -37,38 +37,40 @@ export default function NodeOutputs({
   if (shouldShowAllOutputs) {
     const outputsToRender =
       keyPrefix === "hidden"
-        ? outputs.filter((output) => output.hidden)
-        : outputs.filter((output) => !output.hidden);
+        ? outputs.filter((output) => output && output.name && output.hidden)
+        : outputs.filter((output) => output && output.name && !output.hidden);
 
     return (
       <>
-        {outputsToRender?.map((output, idx) => (
-          <OutputParameter
-            key={`${keyPrefix}-${output.name}-${idx}`}
-            output={output}
-            outputs={outputs}
-            idx={
-              data.node!.outputs?.findIndex(
-                (out) => out.name === output.name,
-              ) ?? idx
-            }
-            lastOutput={idx === outputsToRender.length - 1}
-            data={data}
-            types={types}
-            selected={selected}
-            showNode={showNode}
-            isToolMode={isToolMode}
-            showHiddenOutputs={showHiddenOutputs}
-            handleSelectOutput={handleSelectOutput}
-            hidden={
-              keyPrefix === "hidden"
-                ? showHiddenOutputs
-                  ? output.hidden
-                  : true
-                : false
-            }
-          />
-        ))}
+        {outputsToRender?.map((output, idx) =>
+          output && output.name ? (
+            <OutputParameter
+              key={`${keyPrefix}-${output.name}-${idx}`}
+              output={output}
+              outputs={outputs}
+              idx={
+                data.node!.outputs?.findIndex(
+                  (out) => out && out.name === output.name,
+                ) ?? idx
+              }
+              lastOutput={idx === outputsToRender.length - 1}
+              data={data}
+              types={types}
+              selected={selected}
+              showNode={showNode}
+              isToolMode={isToolMode}
+              showHiddenOutputs={showHiddenOutputs}
+              handleSelectOutput={handleSelectOutput}
+              hidden={
+                keyPrefix === "hidden"
+                  ? showHiddenOutputs
+                    ? output.hidden
+                    : true
+                  : false
+              }
+            />
+          ) : null,
+        )}
       </>
     );
   }
@@ -76,11 +78,11 @@ export default function NodeOutputs({
   const getDisplayOutput = () => {
     const filteredOutputs =
       keyPrefix === "hidden"
-        ? outputs.filter((output) => output.hidden)
-        : outputs.filter((output) => !output.hidden);
+        ? outputs.filter((output) => output && output.name && output.hidden)
+        : outputs.filter((output) => output && output.name && !output.hidden);
 
     const outputWithSelection = filteredOutputs.find(
-      (output) => output.name === selectedOutput?.name,
+      (output) => output && output.name === selectedOutput?.name,
     );
 
     return outputWithSelection || filteredOutputs[0];
@@ -88,7 +90,7 @@ export default function NodeOutputs({
 
   const displayOutput = getDisplayOutput();
 
-  if (!displayOutput) return null;
+  if (!displayOutput || !displayOutput.name) return null;
 
   return (
     <OutputParameter
@@ -97,7 +99,7 @@ export default function NodeOutputs({
       outputs={outputs}
       idx={
         data.node!.outputs?.findIndex(
-          (out) => out.name === displayOutput.name,
+          (out) => out && out.name === displayOutput.name,
         ) ?? 0
       }
       lastOutput={!hasExistingHiddenOutputs}

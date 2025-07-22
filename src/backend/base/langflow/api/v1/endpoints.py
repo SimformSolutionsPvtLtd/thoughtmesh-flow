@@ -80,95 +80,137 @@ async def get_all(framework: str | None = None):
             if framework == "langflow":
                 # For langflow, return all the original components (they are all langflow components)
                 return compress_response(all_types)
-            else:
-                # For other frameworks, use framework manager filtering
-                from langflow.core.frameworks import get_framework_manager
-                from langflow.core.frameworks.types import FrameworkType
+            elif framework == "agno":
+                # For agno, manually create the components in the correct format
+                # Get agno components directly from the registry
+                from langflow.core.frameworks.agno_components import AgnoComponentRegistry
 
-                manager = get_framework_manager()
-                # Framework manager should already be initialized during startup
-                if not manager._initialized:
-                    logger.warning("Framework manager not initialized, initializing now (this may cause timeout)")
-                    await manager.initialize()
+                agno_components = AgnoComponentRegistry.get_all_components()
+                agno_types = {}
+                for comp_info in agno_components:
+                    category = comp_info.category
+                    if category not in agno_types:
+                        agno_types[category] = {}
 
-                # Convert string to FrameworkType for comparison
-                try:
-                    framework_type = FrameworkType(framework.lower())
-                except ValueError:
-                    logger.warning(f"Unknown framework: {framework}")
-                    return compress_response({})
+                    # Create the component structure in the expected frontend format
+                    template = {"_type": comp_info.name}
 
-                if framework_type in manager.get_available_frameworks():
-                    logger.debug(f"Framework {framework} found in available frameworks")
-                    components = await manager.get_all_components(framework_filter=framework_type)
-                    logger.debug(f"Got {len(components)} components from framework manager")
+                    # Add inputs to template
+                    for input_def in comp_info.inputs:
+                        # Determine input type based on field type with standardized mapping
+                        input_type = "StrInput"  # Default
+                        field_type = input_def.type
 
-                    # Convert to the expected format for backward compatibility
-                    framework_types = {}
-                    for comp in components:
-                        category = getattr(comp, "category", "unknown")
-                        if hasattr(comp.category, "value"):
-                            category = comp.category.value
-                        if category not in framework_types:
-                            framework_types[category] = {}
+                        if hasattr(input_def, "options") and input_def.options:
+                            input_type = "DropdownInput"
+                        elif field_type in ["bool", "boolean"]:
+                            input_type = "BoolInput"
+                        elif field_type in ["float", "number", "int", "integer"]:
+                            input_type = "FloatInput" if field_type in ["float", "number"] else "IntInput"
+                        elif field_type in [
+                            "LanguageModel",
+                            "VectorStore",
+                            "BaseAgent",
+                            "BaseTool",
+                            "Embeddings",
+                            "BaseMemory",
+                            "BaseRetriever",
+                        ]:
+                            input_type = "HandleInput"
+                        elif field_type == "file":
+                            input_type = "FileInput"
+                        elif field_type in ["Message", "Data"]:
+                            input_type = "MessageInput" if field_type == "Message" else "DataInput"
 
-                        # Convert component metadata to proper frontend format
-                        template = {"_type": comp.name}
-                        
-                        # Convert inputs to template format
-                        for input_def in getattr(comp, "inputs", []):
-                            template[input_def.name] = {
-                                "type": getattr(input_def, "type", "str"),
-                                "required": getattr(input_def, "required", False),
-                                "placeholder": "",
-                                "list": False,
-                                "show": True,
-                                "multiline": False,
-                                "value": getattr(input_def, "default", None),
-                                "advanced": getattr(input_def, "advanced", False),
-                                "display_name": getattr(input_def, "display_name", input_def.name),
-                                "info": getattr(input_def, "description", ""),
-                                "_input_type": "StrInput",  # Default input type
-                            }
-                            # Set input type based on the field type
-                            if hasattr(input_def, "options") and input_def.options:
-                                template[input_def.name]["options"] = input_def.options
-                                template[input_def.name]["_input_type"] = "DropdownInput"
-                            elif getattr(input_def, "type", "str") == "boolean":
-                                template[input_def.name]["_input_type"] = "BoolInput"
-                            elif getattr(input_def, "type", "str") == "number":
-                                template[input_def.name]["_input_type"] = "FloatInput"
-                                if hasattr(input_def, "min_value"):
-                                    template[input_def.name]["min"] = input_def.min_value
-                                if hasattr(input_def, "max_value"):
-                                    template[input_def.name]["max"] = input_def.max_value
-                            elif getattr(input_def, "type", "str") in ["Model", "VectorDb", "Agent", "Tool"]:
-                                template[input_def.name]["_input_type"] = "HandleInput"
-                                template[input_def.name]["input_types"] = [input_def.type]
-
-                        # Generate base classes from outputs
-                        base_classes = []
-                        output_types = []
-                        for output_def in getattr(comp, "outputs", []):
-                            output_type = getattr(output_def, "type", "Text")
-                            if output_type not in base_classes:
-                                base_classes.append(output_type)
-                            if output_type not in output_types:
-                                output_types.append(output_type)
-
-                        framework_types[category][comp.name] = {
-                            "type": comp.name,
-                            "base_classes": base_classes,
-                            "template": template,
-                            "description": getattr(comp, "description", ""),
-                            "display_name": getattr(comp, "display_name", comp.name),
-                            "framework": framework,
-                            "version": getattr(comp, "version", "1.0.0"),
-                            "output_types": output_types,
-                            "icon": getattr(comp, "icon", None),
+                        template_field = {
+                            "tool_mode": False,
+                            "trace_as_metadata": True,
+                            "load_from_db": False,
+                            "list": False,
+                            "list_add_label": "Add More",
+                            "required": input_def.required,
+                            "placeholder": "",
+                            "show": True,
+                            "name": input_def.name,
+                            "value": input_def.default,
+                            "display_name": input_def.display_name or input_def.name.replace("_", " ").title(),
+                            "advanced": False,
+                            "dynamic": False,
+                            "info": input_def.description or "",
+                            "title_case": False,
+                            "type": input_def.type,
+                            "_input_type": input_type,
                         }
 
-                    return compress_response(framework_types)
+                        # Add specific properties for dropdown
+                        if input_type == "DropdownInput" and hasattr(input_def, "options"):
+                            template_field["options"] = input_def.options
+                        elif input_type == "HandleInput":
+                            template_field["input_types"] = [input_def.type]
+
+                        template[input_def.name] = template_field
+
+                    # Create outputs structure
+                    outputs = []
+                    base_classes = []
+                    output_types = []
+
+                    for output_def in comp_info.outputs:
+                        output_type = output_def.type
+                        if output_type not in base_classes:
+                            base_classes.append(output_type)
+                        if output_type not in output_types:
+                            output_types.append(output_type)
+
+                        # Use types from output definition if available, otherwise fallback to single type
+                        output_types_array = getattr(output_def, "types", [output_type])
+
+                        outputs.append(
+                            {
+                                "display_name": output_def.display_name or output_def.name.replace("_", " ").title(),
+                                "name": output_def.name,
+                                "type": output_type,
+                                "types": output_types_array,  # Use the types from definition
+                                "selected": False,
+                                "cache": True,
+                                "method": "build_" + comp_info.name.lower().replace(" ", "_"),
+                                "allows_loop": getattr(output_def, "allows_loop", False),
+                                "group_outputs": getattr(output_def, "group_outputs", False),
+                                "tool_mode": getattr(output_def, "tool_mode", False),
+                                "value": getattr(output_def, "value", "__UNDEFINED__"),
+                            }
+                        )
+
+                    # Create field order
+                    field_order = ["_type"] + [inp.name for inp in comp_info.inputs]
+
+                    # Build the complete component structure
+                    agno_types[category][comp_info.name] = {
+                        "template": template,
+                        "description": comp_info.description or "",
+                        "icon": comp_info.icon or "",
+                        "base_classes": base_classes,
+                        "display_name": comp_info.display_name or comp_info.name,
+                        "documentation": "",
+                        "minimized": False,
+                        "custom_fields": {},
+                        "output_types": output_types,
+                        "pinned": False,
+                        "conditional_paths": [],
+                        "frozen": False,
+                        "outputs": outputs,
+                        "field_order": field_order,
+                        "beta": False,
+                        "legacy": False,
+                        "edited": False,
+                        "metadata": {},
+                        "tool_mode": False,
+                    }
+
+                return compress_response(agno_types)
+            else:
+                # For other frameworks, return empty for now
+                return compress_response({})
 
         # Fallback to original behavior for all frameworks
         return compress_response(all_types)
