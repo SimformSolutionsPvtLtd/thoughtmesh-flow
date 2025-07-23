@@ -28,6 +28,29 @@ members = [
 overrides = [{ name = "python-pptx", specifier = ">=1.0.2" }]
 
 [[package]]
+name = "agno"
+version = "1.7.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "docstring-parser" },
+    { name = "gitpython" },
+    { name = "httpx" },
+    { name = "pydantic" },
+    { name = "pydantic-settings" },
+    { name = "python-dotenv" },
+    { name = "python-multipart" },
+    { name = "pyyaml" },
+    { name = "rich" },
+    { name = "tomli" },
+    { name = "typer" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/5b/54/de85a1bbb184afa0dce7f92fe2d5102fee5bf9a8dcc2e10ac5e5f6f957c4/agno-1.7.5.tar.gz", hash = "sha256:1035dd730df724bc360870b73cfad1993b2e4137f33d722311aca146fbb705e9", size = 712142, upload-time = "2025-07-17T21:21:46.602Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ec/91/06bd1c8564fd0038afc9cd9d48647719ee86ca3576223de50eb46d4343e5/agno-1.7.5-py3-none-any.whl", hash = "sha256:18996910042200b5ae1041a1f4c69a80492961980a0f52aa08f9c5aaada040f5", size = 948141, upload-time = "2025-07-17T21:21:44.363Z" },
+]
+
+[[package]]
 name = "aiofile"
 version = "3.9.0"
 source = { registry = "https://pypi.org/simple" }
@@ -4693,6 +4716,7 @@ name = "langflow"
 version = "1.5.0.post1"
 source = { editable = "." }
 dependencies = [
+    { name = "agno" },
     { name = "aiofile" },
     { name = "apify-client" },
     { name = "arize-phoenix-otel" },
@@ -4884,6 +4908,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "agno", specifier = ">=1.7.5" },
     { name = "aiofile", specifier = ">=3.9.0,<4.0.0" },
     { name = "apify-client", specifier = ">=1.8.1" },
     { name = "arize-phoenix-otel", specifier = ">=0.6.1" },
