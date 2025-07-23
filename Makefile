@@ -21,6 +21,8 @@ workers ?= 1
 async ?= true
 lf ?= false
 ff ?= true
+reload ?= false
+RELOAD_FLAG := $(if $(filter true,$(reload)),--reload,)
 all: help
 
 ######################
@@ -229,7 +231,7 @@ ifdef login
 		--factory langflow.main:create_app \
 		--host 0.0.0.0 \
 		--port $(port) \
-		$(if $(filter-out 1,$(workers)),, --reload) \
+		$(RELOAD_FLAG) \
 		--env-file $(env) \
 		--loop asyncio \
 		$(if $(workers),--workers $(workers),)
@@ -239,7 +241,7 @@ else
 		--factory langflow.main:create_app \
 		--host 0.0.0.0 \
 		--port $(port) \
-		$(if $(filter-out 1,$(workers)),, --reload) \
+		$(RELOAD_FLAG) \
 		--env-file $(env) \
 		--loop asyncio \
 		$(if $(workers),--workers $(workers),)

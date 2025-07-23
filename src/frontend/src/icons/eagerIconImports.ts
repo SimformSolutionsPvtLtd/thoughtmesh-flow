@@ -1,4 +1,5 @@
 import { AgentQLIcon } from "@/icons/AgentQL";
+import { AgnoIcon } from "@/icons/Agno";
 import { AIMLIcon } from "@/icons/AIML";
 import { AirbyteIcon } from "@/icons/Airbyte";
 import { AnthropicIcon } from "@/icons/Anthropic";
@@ -119,6 +120,7 @@ import { WindsurfIcon } from "./Windsurf";
 export const eagerIconsMapping = {
   "AI/ML": AIMLIcon,
   AgentQL: AgentQLIcon,
+  Agno: AgnoIcon,
   Airbyte: AirbyteIcon,
   Anthropic: AnthropicIcon,
   Apify: ApifyIcon,
