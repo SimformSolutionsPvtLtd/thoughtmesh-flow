@@ -129,7 +129,7 @@ def _categorize_framework_components(components: list[ComponentMetadata]) -> dic
             categorized[category_name] = {}
             
         # Add component to the appropriate category
-        categorized[category_name][component.display_name] = component_dict
+        categorized[category_name][component.name] = component_dict
     
     print(f"Final categories: {categorized}")
     print(f"Final categories: {list(categorized.keys())}")

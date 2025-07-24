@@ -21,9 +21,9 @@ class FrameworkType(str, Enum):
 class ComponentCategory(str, Enum):
     """Component categories"""
 
-    TOOLS = "Tools"
-    MODELS = "Models"
-    VECTOR_STORES = "Vector Stores"
+    TOOLS = "tools"
+    MODELS = "models"
+    VECTOR_STORES = "vectorstores"
     KNOWLEDGE_BASES = "Knowledge Bases"
     EMBEDDINGS = "Embeddings"
     RETRIEVERS = "Retrievers"
@@ -33,7 +33,7 @@ class ComponentCategory(str, Enum):
     CHUNKING = "Chunking"
     DOCUMENT_READERS = "Document Readers"
     CHAINS = "Chains"
-    AGENTS = "Agents"
+    AGENTS = "agents"
     TEAMS = "Teams"
     WORKFLOWS = "Workflows"
     UTILITIES = "Utilities"

@@ -1,0 +1,133 @@
+{
+  "template": {
+    "_type": "Component",
+    "display_name": "Qdrant Vector Database",
+    "description": "High-performance vector similarity search engine",
+    "documentation": "",
+    "icon": "Qdrant",
+    "framework": "agno",
+    "base_classes": [
+      "BaseComponent"
+    ],
+    "frozen": false,
+    "custom_fields": {},
+    "output_types": [],
+    "pinned": false,
+    "conditional_paths": [],
+    "outputs": [
+      {
+        "name": "vector_db",
+        "display_name": "Vector Database",
+        "type": "VectorDb",
+        "description": "Configured Qdrant database"
+      }
+    ],
+    "field_order": [
+      "url",
+      "collection",
+      "api_key"
+    ],
+    "beta": false,
+    "legacy": false,
+    "edited": false,
+    "metadata": {},
+    "tool_mode": false,
+    "url": {
+      "tool_mode": false,
+      "trace_as_metadata": true,
+      "load_from_db": false,
+      "list": false,
+      "list_add_label": "Add More",
+      "required": false,
+      "placeholder": "",
+      "show": true,
+      "name": "url",
+      "value": "http://localhost:6333",
+      "display_name": "Qdrant URL",
+      "advanced": false,
+      "dynamic": false,
+      "info": "Qdrant server URL",
+      "title_case": false,
+      "type": "string",
+      "_input_type": "StringInput"
+    },
+    "collection": {
+      "tool_mode": false,
+      "trace_as_metadata": true,
+      "load_from_db": false,
+      "list": false,
+      "list_add_label": "Add More",
+      "required": true,
+      "placeholder": "",
+      "show": true,
+      "name": "collection",
+      "value": "documents",
+      "display_name": "Collection Name",
+      "advanced": false,
+      "dynamic": false,
+      "info": "Collection name for storing vectors",
+      "title_case": false,
+      "type": "string",
+      "_input_type": "StringInput"
+    },
+    "api_key": {
+      "tool_mode": false,
+      "trace_as_metadata": true,
+      "load_from_db": false,
+      "list": false,
+      "list_add_label": "Add More",
+      "required": false,
+      "placeholder": "",
+      "show": true,
+      "name": "api_key",
+      "value": "",
+      "display_name": "API Key",
+      "advanced": false,
+      "dynamic": false,
+      "info": "Qdrant API key for authentication",
+      "title_case": false,
+      "type": "string",
+      "_input_type": "StringInput"
+    }
+  },
+  "description": "High-performance vector similarity search engine",
+  "icon": "Qdrant",
+  "base_classes": [
+    "BaseComponent"
+  ],
+  "display_name": "Qdrant Vector Database",
+  "documentation": "",
+  "minimized": false,
+  "custom_fields": {},
+  "output_types": [],
+  "pinned": false,
+  "conditional_paths": [],
+  "frozen": false,
+  "outputs": [
+    {
+      "name": "vector_db",
+      "display_name": "Vector Database",
+      "type": "VectorDb",
+      "description": "Configured Qdrant database"
+    }
+  ],
+  "field_order": [
+    "url",
+    "collection",
+    "api_key"
+  ],
+  "beta": false,
+  "legacy": false,
+  "edited": false,
+  "metadata": {},
+  "tool_mode": false,
+  "framework": "agno",
+  "framework_component_id": "agno_qdrant",
+  "lazy_loaded": false,
+  "template_code": "",
+  "field_config": {},
+  "tags": [],
+  "version": "1.0.0",
+  "created_at": "2025-07-23T19:09:05.007131",
+  "updated_at": null
+}
