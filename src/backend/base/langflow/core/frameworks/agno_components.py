@@ -8,7 +8,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from .types import ComponentCategory, ComponentMetadata, InputDefinition, OutputDefinition
+from .types import ComponentCategory, ComponentMetadata, FrameworkType, InputDefinition, OutputDefinition
 
 
 class AgnoComponentRegistry:
@@ -46,7 +46,7 @@ class AgnoComponentRegistry:
                 display_name="OpenAI Chat Model",
                 description="OpenAI GPT models for chat completion",
                 category=ComponentCategory.MODELS,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="model_id",
@@ -98,7 +98,7 @@ class AgnoComponentRegistry:
                 display_name="Anthropic Claude Model",
                 description="Anthropic's Claude models for advanced reasoning",
                 category=ComponentCategory.MODELS,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="model_id",
@@ -140,7 +140,7 @@ class AgnoComponentRegistry:
                 display_name="Groq Llama Model",
                 description="Groq's lightning-fast Llama models",
                 category=ComponentCategory.MODELS,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="model_id",
@@ -172,7 +172,7 @@ class AgnoComponentRegistry:
                 display_name="Ollama Local Model",
                 description="Local Ollama models for privacy-focused AI",
                 category=ComponentCategory.MODELS,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="model_id",
@@ -205,7 +205,7 @@ class AgnoComponentRegistry:
                 display_name="Google Gemini Model",
                 description="Google's Gemini models with multimodal capabilities",
                 category=ComponentCategory.MODELS,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="model_id",
@@ -243,7 +243,7 @@ class AgnoComponentRegistry:
                 display_name="DuckDuckGo Search Tools",
                 description="Web search tools powered by DuckDuckGo",
                 category=ComponentCategory.TOOLS,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="num_results",
@@ -280,7 +280,7 @@ class AgnoComponentRegistry:
                 display_name="Yahoo Finance Tools",
                 description="Financial data and stock information tools",
                 category=ComponentCategory.TOOLS,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="stock_price",
@@ -320,7 +320,7 @@ class AgnoComponentRegistry:
                 display_name="ArXiv Research Tools",
                 description="Academic paper search and download from ArXiv",
                 category=ComponentCategory.TOOLS,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="download_dir",
@@ -354,7 +354,7 @@ class AgnoComponentRegistry:
                 display_name="File Management Tools",
                 description="Tools for reading, writing, and managing files",
                 category=ComponentCategory.TOOLS,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="base_dir",
@@ -397,7 +397,7 @@ class AgnoComponentRegistry:
                 display_name="Calculator Tools",
                 description="Mathematical calculation tools",
                 category=ComponentCategory.TOOLS,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="enable_all",
@@ -421,7 +421,7 @@ class AgnoComponentRegistry:
                 display_name="Reasoning and Logic Tools",
                 description="Advanced reasoning and chain-of-thought tools",
                 category=ComponentCategory.TOOLS,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="add_instructions",
@@ -459,7 +459,7 @@ class AgnoComponentRegistry:
                 display_name="PostgreSQL with pgvector",
                 description="PostgreSQL database with vector similarity search",
                 category=ComponentCategory.VECTOR_STORES,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="db_url",
@@ -503,7 +503,7 @@ class AgnoComponentRegistry:
                 display_name="LanceDB Vector Store",
                 description="Fast vector database with hybrid search capabilities",
                 category=ComponentCategory.VECTOR_STORES,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="uri",
@@ -547,7 +547,7 @@ class AgnoComponentRegistry:
                 display_name="Qdrant Vector Database",
                 description="High-performance vector similarity search engine",
                 category=ComponentCategory.VECTOR_STORES,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="url",
@@ -589,7 +589,7 @@ class AgnoComponentRegistry:
                 display_name="Milvus Vector Database",
                 description="Scalable vector database for large-scale similarity search",
                 category=ComponentCategory.VECTOR_STORES,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="uri",
@@ -633,7 +633,7 @@ class AgnoComponentRegistry:
                 display_name="Pinecone Vector Database",
                 description="Managed vector database service with high performance",
                 category=ComponentCategory.VECTOR_STORES,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="api_key",
@@ -680,7 +680,7 @@ class AgnoComponentRegistry:
                 display_name="PDF from URL Knowledge Base",
                 description="Knowledge base that loads PDFs from URLs",
                 category=ComponentCategory.KNOWLEDGE_BASES,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="urls",
@@ -723,7 +723,7 @@ class AgnoComponentRegistry:
                 display_name="Website Content Knowledge Base",
                 description="Knowledge base that crawls and indexes website content",
                 category=ComponentCategory.KNOWLEDGE_BASES,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="urls",
@@ -766,7 +766,7 @@ class AgnoComponentRegistry:
                 display_name="Document Collection Knowledge Base",
                 description="Knowledge base for document collections with metadata",
                 category=ComponentCategory.KNOWLEDGE_BASES,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="documents",
@@ -799,7 +799,7 @@ class AgnoComponentRegistry:
                 display_name="Combined Knowledge Sources",
                 description="Combines multiple knowledge sources into one",
                 category=ComponentCategory.KNOWLEDGE_BASES,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="sources",
@@ -838,7 +838,7 @@ class AgnoComponentRegistry:
                 display_name="OpenAI Text Embeddings",
                 description="OpenAI's text embedding models",
                 category=ComponentCategory.EMBEDDINGS,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="model_id",
@@ -880,7 +880,7 @@ class AgnoComponentRegistry:
                 display_name="Cohere Text Embeddings",
                 description="Cohere's multilingual embedding models",
                 category=ComponentCategory.EMBEDDINGS,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="model_id",
@@ -915,7 +915,7 @@ class AgnoComponentRegistry:
                 display_name="HuggingFace Text Embeddings",
                 description="HuggingFace transformer-based embeddings",
                 category=ComponentCategory.EMBEDDINGS,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="model_name",
@@ -949,7 +949,7 @@ class AgnoComponentRegistry:
                 display_name="Ollama Local Embeddings",
                 description="Local embedding models via Ollama",
                 category=ComponentCategory.EMBEDDINGS,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="model_id",
@@ -999,7 +999,7 @@ class AgnoComponentRegistry:
                 display_name="Agent Conversation Memory",
                 description="Memory system for storing agent conversations",
                 category=ComponentCategory.MEMORY,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="db_url",
@@ -1033,7 +1033,7 @@ class AgnoComponentRegistry:
                 display_name="User-Specific Memory",
                 description="Memory system for storing user-specific information",
                 category=ComponentCategory.MEMORY,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="db_url",
@@ -1066,7 +1066,7 @@ class AgnoComponentRegistry:
                 display_name="Team Shared Memory",
                 description="Shared memory system for agent teams",
                 category=ComponentCategory.MEMORY,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="db_url",
@@ -1105,7 +1105,7 @@ class AgnoComponentRegistry:
                 display_name="SQLite Agent Storage",
                 description="SQLite-based storage for agent sessions",
                 category=ComponentCategory.STORAGE,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="db_file",
@@ -1140,7 +1140,7 @@ class AgnoComponentRegistry:
                 display_name="PostgreSQL Agent Storage",
                 description="PostgreSQL-based storage for agent sessions",
                 category=ComponentCategory.STORAGE,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="db_url",
@@ -1180,7 +1180,7 @@ class AgnoComponentRegistry:
                 display_name="Cohere Reranking Model",
                 description="Cohere's reranking models for improving search results",
                 category=ComponentCategory.RERANKERS,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="model",
@@ -1225,7 +1225,7 @@ class AgnoComponentRegistry:
                 display_name="Sentence Transformer Reranking",
                 description="Local reranking using sentence transformers",
                 category=ComponentCategory.RERANKERS,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="model",
@@ -1269,7 +1269,7 @@ class AgnoComponentRegistry:
                 display_name="Fixed Size Text Chunking",
                 description="Split text into fixed-size chunks with overlap",
                 category=ComponentCategory.CHUNKING,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="chunk_size",
@@ -1308,7 +1308,7 @@ class AgnoComponentRegistry:
                 display_name="Recursive Text Chunking",
                 description="Recursively split text using multiple separators",
                 category=ComponentCategory.CHUNKING,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="chunk_size",
@@ -1354,7 +1354,7 @@ class AgnoComponentRegistry:
                 display_name="Semantic Text Chunking",
                 description="Split text based on semantic similarity",
                 category=ComponentCategory.CHUNKING,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="similarity_threshold",
@@ -1393,7 +1393,7 @@ class AgnoComponentRegistry:
                 display_name="AI-Powered Agentic Chunking",
                 description="Use AI to intelligently chunk documents",
                 category=ComponentCategory.CHUNKING,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="model",
@@ -1435,7 +1435,7 @@ class AgnoComponentRegistry:
                 display_name="PDF Document Reader",
                 description="Read and extract text from PDF documents",
                 category=ComponentCategory.DOCUMENT_READERS,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="extract_images",
@@ -1470,7 +1470,7 @@ class AgnoComponentRegistry:
                 display_name="Word Document Reader",
                 description="Read and extract text from Word documents",
                 category=ComponentCategory.DOCUMENT_READERS,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="extract_tables",
@@ -1505,7 +1505,7 @@ class AgnoComponentRegistry:
                 display_name="Web Content Reader",
                 description="Read and extract content from web pages",
                 category=ComponentCategory.DOCUMENT_READERS,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="timeout",
@@ -1543,12 +1543,197 @@ class AgnoComponentRegistry:
         """Get agent components."""
         return [
             ComponentMetadata(
+                id="agno_agent",
+                name="Agent",
+                display_name="Agno Agent",
+                description="A comprehensive Agno Agent with full capability support including model, tools, knowledge base, and advanced controls",
+                category=ComponentCategory.AGENTS,
+                framework=FrameworkType.AGNO,
+                inputs=[
+                    # Core Agent Inputs
+                    InputDefinition(
+                        name="model",
+                        display_name="Language Model",
+                        type="Model",
+                        required=True,
+                        description="The language model to use for this agent. Supports OpenAI, Anthropic, Groq, Ollama, and other providers.",
+                    ),
+                    InputDefinition(
+                        name="input",
+                        display_name="Input",
+                        type="string",
+                        required=False,
+                        description="Input message or task for the agent to process",
+                    ),
+                    InputDefinition(
+                        name="instructions",
+                        display_name="Instructions",
+                        type="string",
+                        required=False,
+                        description="Specific instructions for the agent's behavior and task execution",
+                        default="You are a helpful assistant that can complete tasks using tools.",
+                    ),
+                    InputDefinition(
+                        name="system_prompt",
+                        display_name="System Prompt",
+                        type="string",
+                        required=False,
+                        description="System-level prompt that defines the agent's persona and core behavior",
+                        default="You are a helpful AI assistant. Follow instructions carefully and use tools when necessary.",
+                    ),
+                    InputDefinition(
+                        name="tools",
+                        display_name="Tools",
+                        type="list",
+                        required=False,
+                        description="List of tools available to the agent for task execution",
+                    ),
+                    InputDefinition(
+                        name="knowledge_base",
+                        display_name="Knowledge Base",
+                        type="AgentKnowledge",
+                        required=False,
+                        description="Knowledge base for the agent to search and retrieve relevant information",
+                    ),
+                    # Agent Configuration
+                    InputDefinition(
+                        name="agent_name",
+                        display_name="Agent Name",
+                        type="string",
+                        required=False,
+                        description="Name identifier for the agent",
+                    ),
+                    InputDefinition(
+                        name="description",
+                        display_name="Description",
+                        type="string",
+                        required=False,
+                        description="Description of the agent's role and capabilities",
+                    ),
+                    InputDefinition(
+                        name="introduction",
+                        display_name="Introduction",
+                        type="string",
+                        required=False,
+                        description="Introduction message added to chat history when a run starts",
+                    ),
+                    # Memory and Session Configuration
+                    InputDefinition(
+                        name="memory",
+                        display_name="Agent Memory",
+                        type="AgentMemory",
+                        required=False,
+                        description="Memory system for the agent to store and recall information",
+                    ),
+                    InputDefinition(
+                        name="session_id",
+                        display_name="Session ID",
+                        type="string",
+                        required=False,
+                        description="Session identifier for maintaining conversation context",
+                    ),
+                    InputDefinition(
+                        name="user_id",
+                        display_name="User ID",
+                        type="string",
+                        required=False,
+                        description="User identifier for personalization and memory",
+                    ),
+                    # Advanced Controls
+                    InputDefinition(
+                        name="show_tool_calls",
+                        display_name="Show Tool Calls",
+                        type="boolean",
+                        required=False,
+                        description="Display tool calls and their results in the output",
+                        default=True,
+                    ),
+                    InputDefinition(
+                        name="markdown",
+                        display_name="Markdown",
+                        type="boolean",
+                        required=False,
+                        description="Enable markdown formatting in agent responses",
+                        default=True,
+                    ),
+                    InputDefinition(
+                        name="search_knowledge",
+                        display_name="Search Knowledge",
+                        type="boolean",
+                        required=False,
+                        description="Enable automatic knowledge base search for relevant information",
+                        default=True,
+                    ),
+                    InputDefinition(
+                        name="reasoning",
+                        display_name="Enable Reasoning",
+                        type="boolean",
+                        required=False,
+                        description="Enable reasoning capabilities for complex problem solving",
+                        default=False,
+                    ),
+                    InputDefinition(
+                        name="structured_output",
+                        display_name="Structured Output",
+                        type="boolean",
+                        required=False,
+                        description="Return structured responses using Pydantic models",
+                        default=False,
+                    ),
+                    InputDefinition(
+                        name="max_loops",
+                        display_name="Max Loops",
+                        type="number",
+                        required=False,
+                        description="Maximum number of tool execution loops",
+                        default=10,
+                        min_value=1,
+                        max_value=50,
+                    ),
+                    InputDefinition(
+                        name="debug_mode",
+                        display_name="Debug Mode",
+                        type="boolean",
+                        required=False,
+                        description="Enable debug logging for troubleshooting",
+                        default=False,
+                    ),
+                ],
+                outputs=[
+                    OutputDefinition(
+                        name="agent",
+                        display_name="Agent",
+                        type="Agent",
+                        description="Configured Agno Agent ready for execution",
+                    ),
+                    OutputDefinition(
+                        name="response",
+                        display_name="Response",
+                        type="string",
+                        description="Agent's response to the input query",
+                    ),
+                    OutputDefinition(
+                        name="tool_calls",
+                        display_name="Tool Calls",
+                        type="list",
+                        description="List of tool calls made by the agent",
+                    ),
+                    OutputDefinition(
+                        name="session_data",
+                        display_name="Session Data",
+                        type="dict",
+                        description="Session information and metadata",
+                    ),
+                ],
+                created_at=datetime.now(),
+            ),
+            ComponentMetadata(
                 id="agno_basic_agent",
                 name="Basic Agent",
                 display_name="Basic AI Agent",
-                description="A basic AI agent with model and tools",
+                description="A simplified AI agent with essential functionality",
                 category=ComponentCategory.AGENTS,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="model",
@@ -1592,7 +1777,7 @@ class AgnoComponentRegistry:
                 display_name="Knowledge-Enhanced Agent",
                 description="AI agent with knowledge base integration",
                 category=ComponentCategory.AGENTS,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="model",
@@ -1637,7 +1822,7 @@ class AgnoComponentRegistry:
                 display_name="Reasoning-Capable Agent",
                 description="AI agent with advanced reasoning capabilities",
                 category=ComponentCategory.AGENTS,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="model",
@@ -1681,7 +1866,7 @@ class AgnoComponentRegistry:
                 display_name="Multi-Agent Team",
                 description="Coordinated team of AI agents",
                 category=ComponentCategory.TEAMS,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="agents",
@@ -1727,7 +1912,7 @@ class AgnoComponentRegistry:
                 display_name="Research Agent Team",
                 description="Specialized team for research tasks",
                 category=ComponentCategory.TEAMS,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="research_agent",
@@ -1777,7 +1962,7 @@ class AgnoComponentRegistry:
                 display_name="Sequential Agent Workflow",
                 description="Sequential execution workflow for agents",
                 category=ComponentCategory.WORKFLOWS,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="agents",
@@ -1819,7 +2004,7 @@ class AgnoComponentRegistry:
                 display_name="Parallel Agent Workflow",
                 description="Parallel execution workflow for agents",
                 category=ComponentCategory.WORKFLOWS,
-                framework="agno",
+                framework=FrameworkType.AGNO,
                 inputs=[
                     InputDefinition(
                         name="agents",
