@@ -76,19 +76,19 @@ class AgnoModelComponent(LCModelComponent):
     def build_model(self) -> LanguageModel:  # type: ignore[type-var]
         try:
             # Import Agno model classes
-            from agno.models.anthropic import Claude
-            from agno.models.google import Gemini
-            from agno.models.ollama import Ollama
+            # from agno.models.anthropic import Claude
+            # from agno.models.google import Gemini
+            # from agno.models.ollama import Ollama
             from agno.models.openai import OpenAIChat
-            from agno.models.openai.like import OpenAILike
+            # from agno.models.openai.like import OpenAILike
 
             # Model mapping
             model_map = {
                 "openai": OpenAIChat,
-                "anthropic": Claude,
-                "gemini": Gemini,
-                "ollama": Ollama,
-                "openai_like": OpenAILike,
+                # "anthropic": Claude,
+                # "gemini": Gemini,
+                # "ollama": Ollama,
+                # "openai_like": OpenAILike,
             }
 
             # Get model class

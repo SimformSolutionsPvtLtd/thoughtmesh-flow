@@ -1,6 +1,10 @@
 from collections.abc import Callable
 from typing import Text, TypeAlias, TypeVar
 
+from agno.agent.agent import Agent as AgnoAgent
+from agno.embedder.base import Embedder as AgnoEmbedder
+from agno.models.base import Model as AgnoBaseModel
+from agno.vectordb.base import VectorDb as AgnoVectorDb
 from langchain.agents.agent import AgentExecutor
 from langchain.chains.base import Chain
 from langchain.memory.chat_memory import BaseChatMemory
@@ -24,10 +28,10 @@ from langflow.schema.dataframe import DataFrame
 from langflow.schema.message import Message
 
 NestedDict: TypeAlias = dict[str, str | dict]
-LanguageModel = TypeVar("LanguageModel", BaseLanguageModel, BaseLLM, BaseChatModel)
-ToolEnabledLanguageModel = TypeVar("ToolEnabledLanguageModel", BaseLanguageModel, BaseLLM, BaseChatModel)
+LanguageModel = TypeVar("LanguageModel", BaseLanguageModel, BaseLLM, BaseChatModel, AgnoBaseModel)
+ToolEnabledLanguageModel = TypeVar("ToolEnabledLanguageModel", BaseLanguageModel, BaseLLM, BaseChatModel, AgnoBaseModel)
 Memory = TypeVar("Memory", bound=BaseChatMessageHistory)
-
+Agent = TypeVar("Agent", AgnoAgent, AgentExecutor)
 Retriever = TypeVar(
     "Retriever",
     BaseRetriever,
@@ -48,9 +52,16 @@ class Code:
     pass
 
 
+AGNO_BASE_TYPES = {
+    "AgnoAgent": AgnoAgent,
+    "AgnoEmbedder": AgnoEmbedder,
+    "AgnoBaseModel": AgnoBaseModel,
+    "AgnoVectorDb": AgnoVectorDb,
+}
+
 LANGCHAIN_BASE_TYPES = {
     "Chain": Chain,
-    "AgentExecutor": AgentExecutor,
+    "AgentExecutor": Agent,
     "BaseTool": BaseTool,
     "Tool": Tool,
     "BaseLLM": BaseLLM,
@@ -74,6 +85,7 @@ LANGCHAIN_BASE_TYPES = {
 # Langchain base types plus Python base types
 CUSTOM_COMPONENT_SUPPORTED_TYPES = {
     **LANGCHAIN_BASE_TYPES,
+    **AGNO_BASE_TYPES,
     "NestedDict": NestedDict,
     "Data": Data,
     "Message": Message,
@@ -85,7 +97,12 @@ CUSTOM_COMPONENT_SUPPORTED_TYPES = {
     "DataFrame": DataFrame,
 }
 
-DEFAULT_IMPORT_STRING = """from langchain.agents.agent import AgentExecutor
+DEFAULT_IMPORT_STRING = """
+from agno.agent.agent import Agent as AgnoAgent
+from agno.embedder.base import Embedder as AgnoEmbedder
+from agno.models.base import Model as AgnoBaseModel
+from agno.vectordb.base import VectorDb as AgnoVectorDb
+from langchain.agents.agent import AgentExecutor
 from langchain.chains.base import Chain
 from langchain.memory.chat_memory import BaseChatMemory
 from langchain_core.chat_history import BaseChatMessageHistory
